@@ -1,4 +1,4 @@
-LLVM_SUFFIX="-mp-4.0"
+LLVM_SUFFIX=""
 
 if [ "$#" -ne 2 ]; then
   echo "Use: $0 <filename (without extension)> <function name>"

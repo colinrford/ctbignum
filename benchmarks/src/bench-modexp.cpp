@@ -1,100 +1,81 @@
 //
 // This file is part of
 //
-// CTBignum 	
+// CTBignum
 //
 // C++ Library for Compile-Time and Run-Time Multi-Precision and Modular Arithmetic
-// 
+//
 //
 // This file is distributed under the Apache License, Version 2.0. See the LICENSE
 // file for details.
+
 #include <NTL/ZZ.h>
 #include <NTL/ZZ_p.h>
 #include <benchmark/benchmark.h>
 #include <random>
 
-#include <ctbignum/bigint.hpp>
-#include <ctbignum/decimal_literals.hpp>
-#include <ctbignum/mod_exp.hpp>
+import std;
+import lam.ctbignum;
 
-#include <libff/algebra/fields/fp.hpp>
-#include <libff/algebra/fields/bigint.hpp>
+using namespace lam::cbn::literals;
 
-using namespace cbn::literals;
-
-
-static void modexp_ntl(benchmark::State &state) {
+static void modexp_ntl(benchmark::State &state)
+{
   using NTL::ZZ;
   using NTL::ZZ_p;
-  using NTL::conv;
 
-  auto modulus =
-      conv<ZZ>("1606938044258990275541962092341162602522202993782792835301611");
+  // Use RandomBits_ZZ instead of conv to avoid libc++/libstdc++ ABI issues
+  auto modulus = NTL::RandomBits_ZZ(200);
+  if (IsZero(modulus))
+    modulus = 1 + NTL::RandomBits_ZZ(200);
   ZZ_p::init(modulus);
 
   std::default_random_engine generator;
   std::uniform_int_distribution<uint64_t> distribution(0);
 
-  ZZ_p z; 
-  ZZ exp = conv<ZZ>("5208756711089370345167341923545687104");
+  ZZ_p z;
+  ZZ exp = NTL::RandomBits_ZZ(100);
 
-  ZZ_p a = conv<ZZ_p>( conv<ZZ>("43234613467152613512549871563467271263417258763487658172645"));
+  ZZ_p a = NTL::random_ZZ_p();
 
-  //a = NTL::random_ZZ_p();
-  //exp = NTL::RandomBits_ZZ(100);
-
-  for (auto _ : state) {
-    NTL::power(z,a,exp);
+  for (auto _ : state)
+  {
+    NTL::power(z, a, exp);
     benchmark::DoNotOptimize(z);
   }
 }
 
+template <size_t Len> static void modexp_cbn(benchmark::State &state)
+{
 
-static void modexp_mont(benchmark::State &state) {
+  using namespace lam::cbn;
 
-  using namespace cbn;
+  size_t total_sz = 2 * Len * 1000;
 
-  auto modulus =
-      1606938044258990275541962092341162602522202993782792835301611_Z;
+  std::vector<uint64_t> data(total_sz);
+  std::default_random_engine generator;
+  std::uniform_int_distribution<uint64_t> distribution(0);
+  for (auto &limb : data)
+    limb = distribution(generator);
 
-  auto a = to_big_int(43234613467152613512549871563467271263417258763487658172645_Z);
- 
-  auto exp = to_big_int(5208756711089370345167341923545687104_Z);
+  size_t i = 0;
+  auto base_ptr = data.data();
 
+  for (auto _ : state)
+  {
 
-  //a = NTL::random_ZZ_p();
-  //exp = NTL::RandomBits_ZZ(100);
+    auto x = reinterpret_cast<big_int<Len> *>(base_ptr + i);
+    auto y = reinterpret_cast<big_int<Len> *>(base_ptr + i + Len);
+    auto j = lam::cbn::mod_exp(*x, *y, 14474011154664524427946373126085988481658748083205070504932198000989141205031_Z);
+    benchmark::DoNotOptimize(j);
 
-  for (auto _ : state) {
-    auto z = mod_exp(a,exp,modulus);
-    benchmark::DoNotOptimize(z);
-  }
-}
-
-static auto mymodulus = libff::bigint<4>("1606938044258990275541962092341162602522202993782792835301611");
-
-static void modexp_libff(benchmark::State &state) {
-  using namespace libff;
-  using GF200 = Fp_model<4L, mymodulus>;
-  GF200::euler = bigint<static_cast<mp_size_t>(4)>("803469022129495137770981046170581301261101496891396417650805");
-  GF200::t = bigint<static_cast<mp_size_t>(4)>("803469022129495137770981046170581301261101496891396417650805");
-  GF200::t_minus_1_over_2 = bigint<static_cast<mp_size_t>(4)>("401734511064747568885490523085290650630550748445698208825402");
-  GF200::Rsquared = bigint<static_cast<mp_size_t>(4)>("286744594012585855785596659781179801600");
-  GF200::Rcubed = bigint<static_cast<mp_size_t>(4)>("1602082444755226872864308934888775317659811381481692123365611");
-  GF200::s = 1;
-  GF200::num_bits = 200;
-  GF200::inv = 9890594694840014909UL;
-
-  auto a = GF200(libff::bigint<4>("43234613467152613512549871563467271263417258763487658172645")); //195 bits
-  auto exp = libff::bigint<2>("5208756711089370345167341923545687104"); // 122 bits
-
-  for (auto _ : state) {
-    auto z = a^exp;
-    benchmark::DoNotOptimize(z);
+    i += 2 * Len;
+    if (i == total_sz)
+      i = 0;
   }
 }
 
 BENCHMARK(modexp_ntl);
-BENCHMARK(modexp_mont);
-BENCHMARK(modexp_libff);
+BENCHMARK_TEMPLATE(modexp_cbn, 4);
+
 BENCHMARK_MAIN();

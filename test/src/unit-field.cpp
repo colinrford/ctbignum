@@ -1,25 +1,26 @@
 //
 // This file is part of
 //
-// CTBignum 	
+// CTBignum
 //
 // C++ Library for Compile-Time and Run-Time Multi-Precision and Modular Arithmetic
-// 
+//
 //
 // This file is distributed under the Apache License, Version 2.0. See the LICENSE
 // file for details.
 #include "catch.hpp"
 
-#include <ctbignum/ctbignum.hpp>
+import std;
+import lam.ctbignum;
 
-#include <sstream>
+TEST_CASE("Finite Field class")
+{
 
-TEST_CASE("Finite Field class") {
+  using namespace lam::cbn;
+  using namespace lam::cbn::literals;
 
-  using namespace cbn;
-  using namespace cbn::literals;
-
-  SECTION("Initialization") {
+  SECTION("Initialization")
+  {
 
     auto modulus = 1267650600228229401496703205653_Z;
     using GF101 = decltype(Zq(modulus));
@@ -35,7 +36,8 @@ TEST_CASE("Finite Field class") {
     REQUIRE(z.data == result);
   }
 
-  SECTION("Alternative initialization") {
+  SECTION("Alternative initialization")
+  {
 
     using GF101 = decltype(Zq(1267650600228229401496703205653_Z));
     constexpr GF101 x(1268888540267514781771602329707_Z);
@@ -44,7 +46,8 @@ TEST_CASE("Finite Field class") {
     REQUIRE(x.data == result);
   }
 
-  SECTION("Compound multiplication assignment and multiplication") {
+  SECTION("Compound multiplication assignment and multiplication")
+  {
 
     using GF101 = decltype(Zq(1267650600228229401496703205653_Z));
 
@@ -60,7 +63,8 @@ TEST_CASE("Finite Field class") {
     static_assert((x * y).data == result.data);
   }
 
-  SECTION("Compound addition assignment and addition") {
+  SECTION("Compound addition assignment and addition")
+  {
 
     using GF101 = decltype(Zq(1267650600228229401496703205653_Z));
 
@@ -76,7 +80,8 @@ TEST_CASE("Finite Field class") {
     static_assert((x + y).data == result.data);
   }
 
-  SECTION("Compound subtraction assignment and subtraction") {
+  SECTION("Compound subtraction assignment and subtraction")
+  {
 
     using GF101 = decltype(Zq(1267650600228229401496703205653_Z));
 
@@ -92,7 +97,8 @@ TEST_CASE("Finite Field class") {
     static_assert((y - x).data == result.data);
   }
 
-  SECTION("Compound division assignment and division") {
+  SECTION("Compound division assignment and division")
+  {
 
     using GF101 = decltype(Zq(1267650600228229401496703205653_Z));
 
@@ -109,10 +115,11 @@ TEST_CASE("Finite Field class") {
   }
 }
 
-TEST_CASE("Finite Field class - output to stream") {
+TEST_CASE("Finite Field class - output to stream")
+{
 
-  using namespace cbn;
-  using namespace cbn::literals;
+  using namespace lam::cbn;
+  using namespace lam::cbn::literals;
 
   auto modulus = 83124387682521574012837928367540946873_Z;
   // some dummy modulus
@@ -126,4 +133,3 @@ TEST_CASE("Finite Field class - output to stream") {
 
   REQUIRE(ss.str() == "4387682521574012837928367540");
 }
-

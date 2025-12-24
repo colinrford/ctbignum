@@ -1,0 +1,10 @@
+# macOS
+.DS_Store
+# typical cmake build folder
+build*/
+# JetBrains / CLion
+.idea
+cmake-build-*
+# cmake
+CMakeFiles/
+CMakeCache.txt

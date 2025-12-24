@@ -9,69 +9,87 @@
 # This file is distributed under the Apache License, Version 2.0. See the LICENSE
 # file for details.
 
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.31.6)
 
-# This cmake file was inspired by that of nlohmann/json
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 4.0.3)
+  set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
+elseif(CMAKE_VERSION VERSION_GREATER_EQUAL 4.0.0)
+  set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "a9e1cf81-9932-4810-974b-6eccaf14e457")
+elseif(CMAKE_VERSION VERSION_GREATER_EQUAL 3.31.6)
+  set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "0e5b6991-d74f-4b3d-a41c-cf096e0b2508")
+else()
+  message(FATAL_ERROR "Version lower than 3.31.6 not supported (by me)")
+endif()
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_MODULE_STD ON)
+set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 
 ##
 ## PROJECT
 ## name and version
 ##
-project(ctbignum VERSION 0.1 LANGUAGES CXX)
+project(ctbignum VERSION 0.2.0 LANGUAGES CXX)
 
 ##
 ## OPTIONS
 ##
-option(default_cxx_standard "C++ standard" 20)
-set(CMAKE_CXX_STANDARD default_cxx_standard)
-
-option(CTBIGNUM_BuildTests "Build the unit tests when BUILD_TESTING is enabled." ON)
+option(CTBIGNUM_BuildTests "Build the unit tests when BUILD_TESTING is enabled." OFF)
 option(CTBIGNUM_BuildBenchmarks "Build the benchmarks." OFF)
 
 ##
 ## CONFIGURATION
 ##
 set(CTBIGNUM_TARGET_NAME               ${PROJECT_NAME})
-set(CTBIGNUM_CONFIG_INSTALL_DIR        "lib/cmake/${PROJECT_NAME}")
-set(CTBIGNUM_INCLUDE_INSTALL_DIR       "include")
-set(CTBIGNUM_TARGETS_EXPORT_NAME       "${PROJECT_NAME}Targets")
-set(CTBIGNUM_CMAKE_CONFIG_TEMPLATE     "cmake/config.cmake.in")
-set(CTBIGNUM_CMAKE_CONFIG_DIR          "${CMAKE_CURRENT_BINARY_DIR}/cmake_config")
-set(CTBIGNUM_CMAKE_VERSION_CONFIG_FILE "${CTBIGNUM_CMAKE_CONFIG_DIR}/${PROJECT_NAME}ConfigVersion.cmake")
-set(CTBIGNUM_CMAKE_PROJECT_CONFIG_FILE "${CTBIGNUM_CMAKE_CONFIG_DIR}/${PROJECT_NAME}Config.cmake")
 set(CTBIGNUM_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/include/")
-
-set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
-
-
-## Append compiler flag to silence compiler warning for GNU extension
-if (CMAKE_COMPILER_IS_GNUCXX OR (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang"))
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-gnu-string-literal-operator-template")
-endif()
-
 
 ##
 ## TARGET
-## create target and add include path
+## create target and add module sources
 ##
-add_library(${CTBIGNUM_TARGET_NAME} INTERFACE)
+add_library(${CTBIGNUM_TARGET_NAME} STATIC)
 
-target_include_directories(
-    ${CTBIGNUM_TARGET_NAME}
-    INTERFACE
-    $<BUILD_INTERFACE:${CTBIGNUM_INCLUDE_BUILD_DIR}>
-    $<INSTALL_INTERFACE:include>
+target_sources(${CTBIGNUM_TARGET_NAME}
+    PUBLIC
+    FILE_SET CXX_MODULES
+    TYPE CXX_MODULES
+    BASE_DIRS ${PROJECT_SOURCE_DIR}/include
+    FILES
+        # Primary module interface
+        include/ctbignum/ctbignum.cppm
+        # Module partitions (in dependency order)
+        include/ctbignum/bigint.cppm
+        include/ctbignum/slicing.cppm
+        include/ctbignum/utility.cppm
+        include/ctbignum/type_traits.cppm
+        include/ctbignum/relational.cppm
+        include/ctbignum/addition.cppm
+        include/ctbignum/bitshift.cppm
+        include/ctbignum/mult.cppm
+        include/ctbignum/division.cppm
+        include/ctbignum/gcd.cppm
+        include/ctbignum/mod_inv.cppm
+        include/ctbignum/barrett.cppm
+        include/ctbignum/invariant_div.cppm
+        include/ctbignum/montgomery.cppm
+        include/ctbignum/mod_exp.cppm
+        include/ctbignum/io.cppm
+        include/ctbignum/literals.cppm
+        include/ctbignum/field.cppm
 )
 
 ##
 ## TESTS
 ## create and configure the unit test target
 ##
-include(CTest) #adds option BUILD_TESTING (default ON)
-
-if(BUILD_TESTING AND CTBIGNUM_BuildTests)
-    enable_testing()
-    add_subdirectory(test)
+if(CTBIGNUM_BuildTests)
+    include(CTest)
+    if(BUILD_TESTING)
+        enable_testing()
+        add_subdirectory(test)
+    endif()
 endif()
 
 if(CTBIGNUM_BuildBenchmarks)
@@ -80,32 +98,18 @@ endif()
 
 ##
 ## INSTALL
-## install header files, generate and install cmake config files for find_package()
+## install targets
 ##
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(
-    ${CTBIGNUM_CMAKE_VERSION_CONFIG_FILE} COMPATIBILITY SameMajorVersion
-)
-configure_package_config_file(
-    ${CTBIGNUM_CMAKE_CONFIG_TEMPLATE}
-    ${CTBIGNUM_CMAKE_PROJECT_CONFIG_FILE}
-    INSTALL_DESTINATION ${CTBIGNUM_CONFIG_INSTALL_DIR}
+include(GNUInstallDirs)
+
+install(TARGETS ${CTBIGNUM_TARGET_NAME}
+    EXPORT ${PROJECT_NAME}Targets
+    FILE_SET CXX_MODULES
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-install(
-    DIRECTORY ${CTBIGNUM_INCLUDE_BUILD_DIR}
-    DESTINATION ${CTBIGNUM_INCLUDE_INSTALL_DIR}
-)
-install(
-    FILES ${CTBIGNUM_CMAKE_PROJECT_CONFIG_FILE} ${CTBIGNUM_CMAKE_VERSION_CONFIG_FILE}
-    DESTINATION ${CTBIGNUM_CONFIG_INSTALL_DIR}
-)
-install(
-    TARGETS ${CTBIGNUM_TARGET_NAME}
-    EXPORT ${CTBIGNUM_TARGETS_EXPORT_NAME}
-    INCLUDES DESTINATION ${CTBIGNUM_INCLUDE_INSTALL_DIR}
-)
-install(
-    EXPORT ${CTBIGNUM_TARGETS_EXPORT_NAME}
-    DESTINATION ${CTBIGNUM_CONFIG_INSTALL_DIR}
+install(EXPORT ${PROJECT_NAME}Targets
+    FILE ${PROJECT_NAME}Targets.cmake
+    NAMESPACE ${PROJECT_NAME}::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
 )

@@ -1,10 +1,10 @@
 //
 // This file is part of
 //
-// CTBignum 	
+// CTBignum
 //
 // C++ Library for Compile-Time and Run-Time Multi-Precision and Modular Arithmetic
-// 
+//
 //
 // This file is distributed under the Apache License, Version 2.0. See the LICENSE
 // file for details.
@@ -14,17 +14,16 @@
 #include <benchmark/benchmark.h>
 #include <random>
 
-#include <ctbignum/ctbignum.hpp>
-#include <ctbignum/bigint.hpp>
-#include <ctbignum/mult.hpp>
-#include <ctbignum/mod_exp.hpp>
+import std;
+import lam.ctbignum;
 
-//template <size_t N> using big_int = sprout::array<uint64_t, N>;
+// template <size_t N> using big_int = sprout::array<uint64_t, N>;
 
-using namespace cbn::literals;
+using namespace lam::cbn::literals;
 
-static void modadd(benchmark::State &state) {
-  using namespace cbn;
+static void modadd(benchmark::State &state)
+{
+  using namespace lam::cbn;
   constexpr auto prime = to_big_int(1606938044258990275541962092341162602522202993782792835301611_Z);
 
   std::default_random_engine generator;
@@ -33,41 +32,45 @@ static void modadd(benchmark::State &state) {
   big_int<4> x;
   big_int<4> y;
 
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 4; ++i)
+  {
     x[i] = distribution(generator);
     y[i] = distribution(generator);
   }
 
-  for (auto _ : state) {
-    benchmark::DoNotOptimize(cbn::mod_add(x, y, prime));
+  for (auto _ : state)
+  {
+    benchmark::DoNotOptimize(lam::cbn::mod_add(x, y, prime));
   }
 }
 
-static void modadd_ntl(benchmark::State &state) {
+static void modadd_ntl(benchmark::State &state)
+{
+  using NTL::conv;
   using NTL::ZZ;
   using NTL::ZZ_p;
-  using NTL::conv;
 
-  auto modulus = conv<ZZ>("1606938044258990275541962092341162602522202993782792835301611");
+  auto modulus = NTL::RandomBits_ZZ(200);
   ZZ_p::init(modulus);
 
   ZZ_p x = NTL::random_ZZ_p();
   ZZ_p y = NTL::random_ZZ_p();
   ZZ_p z;
 
-  for (auto _ : state) {
-    add(z,x,y);
+  for (auto _ : state)
+  {
+    add(z, x, y);
     benchmark::DoNotOptimize(z);
   }
 }
 
-
-static void modmul(benchmark::State &state) {
-  using namespace cbn;
+static void modmul(benchmark::State &state)
+{
+  using namespace lam::cbn;
   constexpr auto prime = 1606938044258990275541962092341162602522202993782792835301611_Z;
-  //constexpr auto mu = cbn::string_to_big_int<5>(
-  //    BOOST_HANA_STRING("834369935906605500935555353972481294766681454045567488"
-  //                      "2604411090793790119337922481889828929536"));
+  // constexpr auto mu = lam::cbn::string_to_big_int<5>(
+  //     BOOST_HANA_STRING("834369935906605500935555353972481294766681454045567488"
+  //                       "2604411090793790119337922481889828929536"));
 
   std::default_random_engine generator;
   std::uniform_int_distribution<uint64_t> distribution(0);
@@ -75,21 +78,25 @@ static void modmul(benchmark::State &state) {
   big_int<4> x;
   big_int<4> y;
 
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 4; ++i)
+  {
     x[i] = distribution(generator);
     y[i] = distribution(generator);
   }
 
-  for (auto _ : state) {
-    auto j = cbn::mul(x, y);
-    auto k = cbn::barrett_reduction(j, prime); //, mu);
+  for (auto _ : state)
+  {
+    auto j = lam::cbn::mul(x, y);
+    auto k = lam::cbn::barrett_reduction(j, prime); //, mu);
     benchmark::DoNotOptimize(k);
   }
 }
 
-class MyFixture : public ::benchmark::Fixture {
+class MyFixture : public ::benchmark::Fixture
+{
 public:
-  void SetUp(const ::benchmark::State &state) {
+  void SetUp(const ::benchmark::State &state)
+  {
 
     std::default_random_engine generator;
     std::uniform_int_distribution<uint64_t> distribution(0);
@@ -107,22 +114,24 @@ public:
   std::vector<uint64_t> data;
 };
 
-BENCHMARK_F(MyFixture, fixture_mul)(benchmark::State &st) {
+BENCHMARK_F(MyFixture, fixture_mul)(benchmark::State &st)
+{
 
-  using namespace cbn;
+  using namespace lam::cbn;
 
   constexpr auto prime = 1606938044258990275541962092341162602522202993782792835301611_Z;
 
   size_t i = 0;
   auto base_ptr = data.data();
 
-  for (auto _ : st) {
+  for (auto _ : st)
+  {
 
-    auto x = reinterpret_cast<big_int<4>*>(base_ptr + i);
-    auto y = reinterpret_cast<big_int<4>*>(base_ptr + i + 4);
+    auto x = reinterpret_cast<big_int<4> *>(base_ptr + i);
+    auto y = reinterpret_cast<big_int<4> *>(base_ptr + i + 4);
 
-    auto j = cbn::mul(*x, *y);
-    //auto k = cbn::barrett_reduction(j, prime);
+    auto j = lam::cbn::mul(*x, *y);
+    // auto k = lam::cbn::barrett_reduction(j, prime);
     benchmark::DoNotOptimize(j);
 
     i += 8;
@@ -133,10 +142,10 @@ BENCHMARK_F(MyFixture, fixture_mul)(benchmark::State &st) {
 
 /*
 static void modmul2(benchmark::State &state) {
-  using namespace cbn;
-  constexpr auto prime = cbn::string_to_big_int<4>(BOOST_HANA_STRING(
+  using namespace lam::cbn;
+  constexpr auto prime = lam::cbn::string_to_big_int<4>(BOOST_HANA_STRING(
       "1606938044258990275541962092341162602522202993782792835301611"));
-  constexpr auto mu = cbn::string_to_big_int<5>(
+  constexpr auto mu = lam::cbn::string_to_big_int<5>(
       BOOST_HANA_STRING("834369935906605500935555353972481294766681454045567488"
                         "2604411090793790119337922481889828929536"));
 
@@ -152,33 +161,34 @@ static void modmul2(benchmark::State &state) {
   }
 
   for (auto _ : state) {
-    benchmark::DoNotOptimize(cbn::barrett_reduction(cbn::mul2(x, y), prime, mu));
+    benchmark::DoNotOptimize(lam::cbn::barrett_reduction(lam::cbn::mul2(x, y), prime, mu));
   }
 }
 */
 
-static void modexp_ntl(benchmark::State &state) {
+static void modexp_ntl(benchmark::State &state)
+{
+  using NTL::conv;
   using NTL::ZZ;
   using NTL::ZZ_p;
-  using NTL::conv;
 
-  auto modulus =
-      conv<ZZ>("1606938044258990275541962092341162602522202993782792835301611");
+  auto modulus = NTL::RandomBits_ZZ(200);
   ZZ_p::init(modulus);
 
   std::default_random_engine generator;
   std::uniform_int_distribution<uint64_t> distribution(0);
 
-  ZZ_p z; 
-  ZZ exp = conv<ZZ>("5208756711089370345167341923545687104");
+  ZZ_p z;
+  ZZ exp = NTL::RandomBits_ZZ(100);
 
-  ZZ_p a = conv<ZZ_p>( conv<ZZ>("43234613467152613512549871563467271263417258763487658172645"));
+  ZZ_p a = conv<ZZ_p>(NTL::RandomBits_ZZ(196));
 
-  //a = NTL::random_ZZ_p();
-  //exp = NTL::RandomBits_ZZ(100);
+  // a = NTL::random_ZZ_p();
+  // exp = NTL::RandomBits_ZZ(100);
 
-  for (auto _ : state) {
-    NTL::power(z,a,exp);
+  for (auto _ : state)
+  {
+    NTL::power(z, a, exp);
     benchmark::DoNotOptimize(z);
   }
 }
@@ -186,12 +196,12 @@ static void modexp_ntl(benchmark::State &state) {
 /*
 static void modexp(benchmark::State &state) {
 
-  using namespace cbn;
+  using namespace lam::cbn;
 
   auto modulus =
       1606938044258990275541962092341162602522202993782792835301611_Z;
 
- 
+
   auto exp = to_big_int(5208756711089370345167341923545687104_Z);
 
 
@@ -205,38 +215,34 @@ static void modexp(benchmark::State &state) {
   }
 }*/
 
-static void modexp_mont(benchmark::State &state) {
+static void modexp_mont(benchmark::State &state)
+{
 
-  using namespace cbn;
+  using namespace lam::cbn;
 
-  auto modulus =
-      1606938044258990275541962092341162602522202993782792835301611_Z;
+  auto modulus = 1606938044258990275541962092341162602522202993782792835301611_Z;
 
   auto a = to_big_int(43234613467152613512549871563467271263417258763487658172645_Z);
- 
+
   auto exp = to_big_int(5208756711089370345167341923545687104_Z);
 
+  // a = NTL::random_ZZ_p();
+  // exp = NTL::RandomBits_ZZ(100);
 
-  //a = NTL::random_ZZ_p();
-  //exp = NTL::RandomBits_ZZ(100);
-
-  for (auto _ : state) {
-    auto z = mod_exp(a,exp,modulus);
+  for (auto _ : state)
+  {
+    auto z = mod_exp(a, exp, modulus);
     benchmark::DoNotOptimize(z);
   }
 }
 
-
-
-
-
-static void modmul_ntl(benchmark::State &state) {
+static void modmul_ntl(benchmark::State &state)
+{
+  using NTL::conv;
   using NTL::ZZ;
   using NTL::ZZ_p;
-  using NTL::conv;
 
-  auto modulus =
-      conv<ZZ>("1606938044258990275541962092341162602522202993782792835301611");
+  auto modulus = NTL::RandomBits_ZZ(200);
   ZZ_p::init(modulus);
 
   std::default_random_engine generator;
@@ -246,15 +252,16 @@ static void modmul_ntl(benchmark::State &state) {
   x = NTL::random_ZZ_p();
   y = NTL::random_ZZ_p();
 
-  for (auto _ : state) {
-    mul(z,x,y);
+  for (auto _ : state)
+  {
+    mul(z, x, y);
     benchmark::DoNotOptimize(z);
   }
 }
 
 /*
 static void reduce(benchmark::State &state) {
-  using namespace cbn;
+  using namespace lam::cbn;
 
   //constexpr auto prime = string_to_big_int<4>(BOOST_HANA_STRING(
   //    "1606938044258990275541962092341162602522202993782792835301611"));
@@ -271,7 +278,7 @@ static void reduce(benchmark::State &state) {
     x[i] = distribution(generator);
   }
   // precompute mu
-  
+
   //constexpr auto z =  detail::unary_encoding<8,9>();
   //constexpr auto quot_rem  = div(z,prime);
   //constexpr auto quot_rem  = div(detail::unary_encoding<2*N2,2*N2+1>(),modulus);
@@ -284,72 +291,79 @@ static void reduce(benchmark::State &state) {
 }
 */
 
-static void reduce_intseq(benchmark::State &state) {
-  using namespace cbn;
+static void reduce_intseq(benchmark::State &state)
+{
+  using namespace lam::cbn;
 
-  //constexpr auto prime = string_to_big_int<4>(BOOST_HANA_STRING(
-  //    "1606938044258990275541962092341162602522202993782792835301611"));
-  //constexpr auto mu = string_to_big_int<8>(
-  //    BOOST_HANA_STRING("834369935906605500935555353972481294766681454045567488"
-  //                      "2604411090793790119337922481889828929536"));
+  // constexpr auto prime = string_to_big_int<4>(BOOST_HANA_STRING(
+  //     "1606938044258990275541962092341162602522202993782792835301611"));
+  // constexpr auto mu = string_to_big_int<8>(
+  //     BOOST_HANA_STRING("834369935906605500935555353972481294766681454045567488"
+  //                       "2604411090793790119337922481889828929536"));
 
   std::default_random_engine generator;
   std::uniform_int_distribution<uint64_t> distribution(0);
 
   big_int<5> x;
 
-  for (int i = 0; i < 5; ++i) {
+  for (int i = 0; i < 5; ++i)
+  {
     x[i] = distribution(generator);
   }
 
-  for (auto _ : state) {
+  for (auto _ : state)
+  {
     auto modulus = 1606938044258990275541962092341162602522202993782792835301611_Z;
-    benchmark::DoNotOptimize(barrett_reduction(x,modulus));
+    benchmark::DoNotOptimize(barrett_reduction(x, modulus));
   }
 }
 
-
-static void reduce_ntl(benchmark::State &state) {
+static void reduce_ntl(benchmark::State &state)
+{
+  using NTL::conv;
   using NTL::ZZ;
   using NTL::ZZ_p;
-  using NTL::conv;
 
-  auto modulus =
-      conv<ZZ>("1606938044258990275541962092341162602522202993782792835301611");
+  auto modulus = NTL::RandomBits_ZZ(200);
   ZZ_p::init(modulus);
   ZZ y = NTL::RandomBits_ZZ(320);
 
-  for (auto _ : state) {
+  for (auto _ : state)
+  {
     auto z = conv<ZZ_p>(y);
     benchmark::DoNotOptimize(z);
   }
 }
 
-static void big_int_from_string_ntl(benchmark::State &state) {
+static void big_int_from_string_ntl(benchmark::State &state)
+{
   using NTL::ZZ;
   using NTL::ZZ_p;
-  using NTL::conv;
 
-  for (auto _ : state) {
-    auto x = conv<ZZ>(
-        "1606938044258990275541962092341162602522202993782792835301611");
+  for (auto _ : state)
+  {
+    // Use NTL::RandomBits_ZZ instead of conv to avoid libc++/libstdc++ ABI issues
+    auto x = NTL::RandomBits_ZZ(200);
     benchmark::DoNotOptimize(x);
   }
 }
-static void big_int_from_string(benchmark::State &state) {
-  using namespace cbn;
+static void big_int_from_string(benchmark::State &state)
+{
+  using namespace lam::cbn;
+  using NTL::conv;
   using NTL::ZZ;
   using NTL::ZZ_p;
-  using NTL::conv;
 
-  for (auto _ : state) {
+  for (auto _ : state)
+  {
     auto x = to_big_int(1606938044258990275541962092341162602522202993782792835301611_Z);
     benchmark::DoNotOptimize(x);
   }
 }
 
-static void modadd_immediate(benchmark::State &state) {
-  using namespace cbn;
+static void modadd_immediate(benchmark::State &state)
+{
+  using namespace lam::cbn;
   constexpr auto prime = to_big_int(1606938044258990275541962092341162602522202993782792835301611_Z);
 
   auto y = to_big_int(1000431856504897268487649876408467273524360183457791240097764_Z);
@@ -360,32 +374,33 @@ static void modadd_immediate(benchmark::State &state) {
   // big_int<4> x;
   big_int<4> x;
 
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 4; ++i)
+  {
     x[i] = distribution(generator);
   }
 
-  for (auto _ : state) {
+  for (auto _ : state)
+  {
     auto k = mod_add(x, y, prime);
     benchmark::DoNotOptimize(k);
   }
 }
 
-static void modadd_immediate_ntl(benchmark::State &state) {
+static void modadd_immediate_ntl(benchmark::State &state)
+{
 
+  using NTL::conv;
   using NTL::ZZ;
   using NTL::ZZ_p;
-  using NTL::conv;
 
   std::default_random_engine generator;
   std::uniform_int_distribution<uint64_t> distribution(0);
 
-  auto modulus =
-      conv<ZZ>("1606938044258990275541962092341162602522202993782792835301611");
+  auto modulus = NTL::RandomBits_ZZ(200);
 
   ZZ_p::init(modulus);
 
-  auto y = conv<ZZ_p>(
-      "1000431856504897268487649876408467273524360183457791240097764");
+  auto y = conv<ZZ_p>("1000431856504897268487649876408467273524360183457791240097764");
   //{ NTL::random() };
 
   // preallocate
@@ -396,7 +411,8 @@ static void modadd_immediate_ntl(benchmark::State &state) {
   // y = NTL::random_ZZ_p();
 
   ZZ_p z;
-  for (auto _ : state) {
+  for (auto _ : state)
+  {
     /*
     state.PauseTiming();
 
@@ -411,14 +427,15 @@ static void modadd_immediate_ntl(benchmark::State &state) {
 
     state.ResumeTiming();
 */
-    //auto z = x + y;
-    add(z,x,y);
+    // auto z = x + y;
+    add(z, x, y);
     benchmark::DoNotOptimize(z);
   }
 }
 
-static void mul_immediate(benchmark::State &state) {
-  using namespace cbn;
+static void mul_immediate(benchmark::State &state)
+{
+  using namespace lam::cbn;
 
   auto y = to_big_int(1000431856504897268487649876408467273524360183457791240097764_Z);
 
@@ -427,11 +444,13 @@ static void mul_immediate(benchmark::State &state) {
 
   // big_int<4> x;
   big_int<4> x;
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 4; ++i)
+  {
     x[i] = distribution(generator);
   }
 
-  for (auto _ : state) {
+  for (auto _ : state)
+  {
     /*
     state.PauseTiming();
 
@@ -448,7 +467,7 @@ static void mul_immediate(benchmark::State &state) {
 
 /*
 static void mul2_immediate(benchmark::State &state) {
-  using namespace cbn;
+  using namespace lam::cbn;
 
   auto y = string_to_big_int<4>(BOOST_HANA_STRING(
       "1000431856504897268487649876408467273524360183457791240097764"));
@@ -476,29 +495,30 @@ static void mul2_immediate(benchmark::State &state) {
 }
 */
 
-static void mul_immediate_ntl(benchmark::State &state) {
+static void mul_immediate_ntl(benchmark::State &state)
+{
 
+  using NTL::conv;
   using NTL::ZZ;
   using NTL::ZZ_p;
-  using NTL::conv;
 
   std::default_random_engine generator;
   std::uniform_int_distribution<uint64_t> distribution(0);
 
-  auto modulus =
-      conv<ZZ>("1606938044258990275541962092341162602522202993782792835301611");
+  auto modulus = NTL::RandomBits_ZZ(200);
 
-  auto y =
-      conv<ZZ>("1000431856504897268487649876408467273524360183457791240097764");
+  auto y = NTL::RandomBits_ZZ(200);
   ZZ x = conv<ZZ>(modulus - 1);
   ZZ z;
 
   auto p = reinterpret_cast<uint64_t *>(x.rep.rep);
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 4; ++i)
+  {
     p[2 + i] = distribution(generator);
   }
 
-  for (auto _ : state) {
+  for (auto _ : state)
+  {
     /*
     state.PauseTiming();
 
@@ -508,27 +528,29 @@ static void mul_immediate_ntl(benchmark::State &state) {
 
     state.ResumeTiming();
 */
-    mul( z,  x , y);
+    mul(z, x, y);
     benchmark::DoNotOptimize(z);
   }
 }
 
+static void mymul_routine(benchmark::State &state)
+{
 
-static void mymul_routine(benchmark::State &state) {
-
-  using namespace cbn;
+  using namespace lam::cbn;
   std::default_random_engine generator;
   std::uniform_int_distribution<uint64_t> distribution(0);
 
   big_int<4> x;
   big_int<4> y;
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 4; ++i)
+  {
     x[i] = distribution(generator);
     y[i] = distribution(generator);
   }
 
-  for (auto _ : state) {
-    auto k = cbn::mul(x, y);
+  for (auto _ : state)
+  {
+    auto k = lam::cbn::mul(x, y);
     benchmark::DoNotOptimize(k);
   }
 }
@@ -536,7 +558,7 @@ static void mymul_routine(benchmark::State &state) {
 /*
 static void mul_nc(benchmark::State &state) {
 
-  using namespace cbn;
+  using namespace lam::cbn;
   std::default_random_engine generator;
   std::uniform_int_distribution<uint64_t> distribution(0);
 
@@ -548,14 +570,14 @@ static void mul_nc(benchmark::State &state) {
   }
 
   for (auto _ : state) {
-    auto k = cbn::mulnc(x, y);
+    auto k = lam::cbn::mulnc(x, y);
     benchmark::DoNotOptimize(k);
   }
 }
 
 static void mul_baseline(benchmark::State &state) {
 
-  using namespace cbn;
+  using namespace lam::cbn;
   std::default_random_engine generator;
   std::uniform_int_distribution<uint64_t> distribution(0);
 
@@ -576,8 +598,8 @@ static void mul_baseline(benchmark::State &state) {
   auto ysz = y.size();
 
   for (auto _ : state) {
-    //auto k = 
-    cbn::mul(zptr, xptr, xsz, yptr, ysz);
+    //auto k =
+    lam::cbn::mul(zptr, xptr, xsz, yptr, ysz);
     benchmark::DoNotOptimize(z);
   }
 }
@@ -597,7 +619,7 @@ static void knuthmul_(benchmark::State &state) {
   }
 
   for (auto _ : state) {
-    auto k = cbn::knuth_mul(x, y);
+    auto k = lam::cbn::knuth_mul(x, y);
     benchmark::DoNotOptimize(k);
   }
 }
@@ -605,7 +627,7 @@ static void knuthmul_(benchmark::State &state) {
 
 static void mul2_(benchmark::State &state) {
 
-  using namespace cbn;
+  using namespace lam::cbn;
   std::default_random_engine generator;
   std::uniform_int_distribution<uint64_t> distribution(0);
 
@@ -617,28 +639,31 @@ static void mul2_(benchmark::State &state) {
   }
 
   for (auto _ : state) {
-    auto k = cbn::mul2(x, y);
+    auto k = lam::cbn::mul2(x, y);
     benchmark::DoNotOptimize(k);
   }
 }
 
 */
 
-static void mulmul(benchmark::State &state) {
+static void mulmul(benchmark::State &state)
+{
 
-  using namespace cbn;
+  using namespace lam::cbn;
   std::default_random_engine generator;
 
   std::random_device rd;
   std::uniform_int_distribution<uint64_t> distribution(rd());
 
   big_int<4> x;
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 4; ++i)
+  {
     x[i] = distribution(generator);
   }
 
-  for (auto _ : state) {
-    auto k = cbn::mul(x, x);
+  for (auto _ : state)
+  {
+    auto k = lam::cbn::mul(x, x);
     benchmark::DoNotOptimize(k);
   }
 }
@@ -646,7 +671,7 @@ static void mulmul(benchmark::State &state) {
 /*
 static void square(benchmark::State &state) {
 
-  using namespace cbn;
+  using namespace lam::cbn;
   std::default_random_engine generator;
   std::uniform_int_distribution<uint64_t> distribution(0);
 
@@ -656,72 +681,75 @@ static void square(benchmark::State &state) {
   }
 
   for (auto _ : state) {
-    auto k = cbn::square(x);
+    auto k = lam::cbn::square(x);
     benchmark::DoNotOptimize(k);
   }
 }
 */
 
+static void mul_ntl(benchmark::State &state)
+{
 
-static void mul_ntl(benchmark::State &state) {
-
+  using NTL::conv;
   using NTL::ZZ;
   using NTL::ZZ_p;
-  using NTL::conv;
 
-  auto x = NTL::RandomBits_ZZ(4*64);
-  auto y = NTL::RandomBits_ZZ(4*64);
+  auto x = NTL::RandomBits_ZZ(4 * 64);
+  auto y = NTL::RandomBits_ZZ(4 * 64);
   ZZ z;
 
-  for (auto _ : state) {
+  for (auto _ : state)
+  {
     mul(z, x, y);
     benchmark::DoNotOptimize(z);
   }
 }
 
+static void montmul(benchmark::State &state)
+{
 
-static void montmul(benchmark::State &state) {
-
-  using namespace cbn;
-  auto prime = cbn::to_big_int(14474011154664524427946373126085988481658748083205070504932198000989141205031_Z);
+  using namespace lam::cbn;
+  auto prime = lam::cbn::to_big_int(14474011154664524427946373126085988481658748083205070504932198000989141205031_Z);
 
   auto inv = 10405855631323336809ULL;
   std::default_random_engine generator;
   std::uniform_int_distribution<uint64_t> distribution(0);
 
-
   big_int<4> x;
   big_int<4> y;
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 4; ++i)
+  {
     x[i] = distribution(generator);
     y[i] = distribution(generator);
   }
 
-  for (auto _ : state) {
-    auto z = cbn::montgomery_mul(x, y, prime, inv);
+  for (auto _ : state)
+  {
+    auto z = lam::cbn::montgomery_mul(x, y, prime, inv);
     benchmark::DoNotOptimize(z);
   }
 }
 
+static void montmul_auto(benchmark::State &state)
+{
 
-static void montmul_auto(benchmark::State &state) {
-
-  using namespace cbn;
+  using namespace lam::cbn;
   auto prime = 14474011154664524427946373126085988481658748083205070504932198000989141205031_Z;
 
   std::default_random_engine generator;
   std::uniform_int_distribution<uint64_t> distribution(0);
 
-
   big_int<4> x;
   big_int<4> y;
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 4; ++i)
+  {
     x[i] = distribution(generator);
     y[i] = distribution(generator);
   }
 
-  for (auto _ : state) {
-    auto z = cbn::montgomery_mul(x, y, prime);
+  for (auto _ : state)
+  {
+    auto z = lam::cbn::montgomery_mul(x, y, prime);
     benchmark::DoNotOptimize(z);
   }
 }
@@ -729,7 +757,7 @@ static void montmul_auto(benchmark::State &state) {
 /*
 static void montmul_auto2(benchmark::State &state) {
 
-  auto prime = cbn::string_to_integer_seq(
+  auto prime = lam::cbn::string_to_integer_seq(
           BOOST_HANA_STRING("14474011154664524427946373126085988481658748083205"
                             "070504932198000989141205031"));
 
@@ -745,19 +773,18 @@ static void montmul_auto2(benchmark::State &state) {
   }
 
   for (auto _ : state) {
-    auto z = cbn::montgomery_mul2(x, y, prime);
+    auto z = lam::cbn::montgomery_mul2(x, y, prime);
     benchmark::DoNotOptimize(z);
   }
 }
 */
 
-
-
-
+/*
 #include <libff/algebra/fields/fp.hpp>
 #include <libff/algebra/fields/bigint.hpp>
 
-static auto mymodulus = libff::bigint<static_cast<mp_size_t>(4)>("14474011154664524427946373126085988481658748083205070504932198000989141205031");
+static auto mymodulus =
+libff::bigint<static_cast<mp_size_t>(4)>("14474011154664524427946373126085988481658748083205070504932198000989141205031");
 static void montmul_libff(benchmark::State &state) {
 
   using namespace libff;
@@ -798,9 +825,9 @@ static void montmul_libff(benchmark::State &state) {
 
 static void mont_reduction(benchmark::State &state) {
 
-  using namespace cbn;
+  using namespace lam::cbn;
 
-  auto prime = cbn::to_big_int(14474011154664524427946373126085988481658748083205070504932198000989141205031_Z);
+  auto prime = lam::cbn::to_big_int(14474011154664524427946373126085988481658748083205070504932198000989141205031_Z);
 
 
   auto inv = 10405855631323336809ULL;
@@ -809,12 +836,12 @@ static void mont_reduction(benchmark::State &state) {
   std::uniform_int_distribution<uint64_t> distribution(0);
 
   big_int<8> x;
-  for (int i = 0; i < 8; ++i) 
+  for (int i = 0; i < 8; ++i)
     x[i] = distribution(generator);
 
 
   for (auto _ : state) {
-    auto z = cbn::montgomery_reduction(x, prime, inv);
+    auto z = lam::cbn::montgomery_reduction(x, prime, inv);
     benchmark::DoNotOptimize(z);
   }
 }
@@ -823,7 +850,7 @@ static void mont_reduction(benchmark::State &state) {
 static void mont_reduction2(benchmark::State &state) {
 
 
-  auto prime = cbn::string_to_integer_seq(
+  auto prime = lam::cbn::string_to_integer_seq(
           BOOST_HANA_STRING("14474011154664524427946373126085988481658748083205"
                             "070504932198000989141205031"));
 
@@ -834,34 +861,34 @@ static void mont_reduction2(benchmark::State &state) {
   std::uniform_int_distribution<uint64_t> distribution(0);
 
   big_int<8> x;
-  for (int i = 0; i < 8; ++i) 
+  for (int i = 0; i < 8; ++i)
     x[i] = distribution(generator);
 
 
   for (auto _ : state) {
-    auto z = cbn::montgomery_reduction2(x, prime);
+    auto z = lam::cbn::montgomery_reduction2(x, prime);
     benchmark::DoNotOptimize(z);
   }
 }
 */
 
-static void mont_reduction_auto(benchmark::State &state) {
+static void mont_reduction_auto(benchmark::State &state)
+{
 
-  using namespace cbn;
+  using namespace lam::cbn;
 
   auto prime = 14474011154664524427946373126085988481658748083205070504932198000989141205031_Z;
-
 
   std::default_random_engine generator;
   std::uniform_int_distribution<uint64_t> distribution(0);
 
   big_int<8> x;
-  for (int i = 0; i < 8; ++i) 
+  for (int i = 0; i < 8; ++i)
     x[i] = distribution(generator);
 
-
-  for (auto _ : state) {
-    auto z = cbn::montgomery_reduction(x, prime);
+  for (auto _ : state)
+  {
+    auto z = lam::cbn::montgomery_reduction(x, prime);
     benchmark::DoNotOptimize(z);
   }
 }
@@ -870,7 +897,7 @@ static void mont_reduction_auto(benchmark::State &state) {
 static void mont_reduction_auto2(benchmark::State &state) {
 
 
-  auto prime = cbn::string_to_integer_seq(
+  auto prime = lam::cbn::string_to_integer_seq(
           BOOST_HANA_STRING("14474011154664524427946373126085988481658748083205"
                             "070504932198000989141205031"));
 
@@ -879,24 +906,22 @@ static void mont_reduction_auto2(benchmark::State &state) {
   std::uniform_int_distribution<uint64_t> distribution(0);
 
   big_int<8> x;
-  for (int i = 0; i < 8; ++i) 
+  for (int i = 0; i < 8; ++i)
     x[i] = distribution(generator);
 
 
   for (auto _ : state) {
-    auto z = cbn::montgomery_reduction2(x, prime);
+    auto z = lam::cbn::montgomery_reduction2(x, prime);
     benchmark::DoNotOptimize(z);
   }
 }
 */
 
-
-
 // BENCHMARK(creation);
 // BENCHMARK(creation_ntl);
 
 /*
- 
+
 BENCHMARK(modadd);
 BENCHMARK(modadd_ntl);
 BENCHMARK(modadd_immediate);
@@ -943,20 +968,20 @@ BENCHMARK(mont_reduction);
 BENCHMARK(mont_reduction_auto);
 */
 
-//BENCHMARK(reduce);
-//BENCHMARK(reduce_intseq);
-//BENCHMARK(reduce_ntl);
-//BENCHMARK(mul_);
-//BENCHMARK(modexp);
+// BENCHMARK(reduce);
+// BENCHMARK(reduce_intseq);
+// BENCHMARK(reduce_ntl);
+// BENCHMARK(mul_);
+// BENCHMARK(modexp);
 
 BENCHMARK(mymul_routine);
 BENCHMARK(mul_ntl);
 
 BENCHMARK(mulmul);
-//BENCHMARK(square);
+// BENCHMARK(square);
 BENCHMARK(modexp_mont);
 BENCHMARK(modexp_ntl);
-//BENCHMARK(mul_nc);
-//BENCHMARK(mul_baseline);
+// BENCHMARK(mul_nc);
+// BENCHMARK(mul_baseline);
 
 BENCHMARK_MAIN();

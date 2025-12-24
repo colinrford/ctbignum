@@ -1,59 +1,58 @@
 //
 // This file is part of
 //
-// CTBignum 	
+// CTBignum
 //
 // C++ Library for Compile-Time and Run-Time Multi-Precision and Modular Arithmetic
-// 
+//
 //
 // This file is distributed under the Apache License, Version 2.0. See the LICENSE
 // file for details.
-#ifndef CT_GCD_HPP
-#define CT_GCD_HPP
 
-#include <cstddef>
-#include <ctbignum/addition.hpp>
-#include <ctbignum/bigint.hpp>
-#include <ctbignum/division.hpp>
-#include <ctbignum/mult.hpp>
-#include <ctbignum/slicing.hpp>
-#include <ctbignum/utility.hpp>
-#include <stdexcept>
+export module lam.ctbignum:gcd;
 
-namespace cbn {
-namespace detail {
+import std;
 
-template <typename T, T... A, T... B, T... Is, std::size_t N = sizeof...(Is)>
-constexpr auto ext_gcd_impl(std::integer_sequence<T, A...>,
-                            std::integer_sequence<T, B...>,
-                            std::integer_sequence<T, Is...>) {
+import :bigint;
+import :slicing;
+import :division;
+import :mult;
+import :addition;
+import :utility;
 
-  using detail::pad;
+namespace lam::cbn
+{
+namespace detail
+{
+
+export template <typename T, T... A, T... B, T... Is, std::size_t N = sizeof...(Is)>
+constexpr auto ext_gcd_impl(std::integer_sequence<T, A...>, std::integer_sequence<T, B...>,
+                            std::integer_sequence<T, Is...>)
+{
+
   using detail::first;
-  using detail::take;
-  using detail::skip;
   using detail::join;
+  using detail::pad;
+  using detail::skip;
+  using detail::take;
 
   constexpr auto a = big_int<N, T>{A...};
   constexpr auto b = big_int<N, T>{B...};
   constexpr auto dummy = big_int<N, T>{};
 
   constexpr bool a_equals_zero =
-      std::is_same<std::integer_sequence<T, A...>,
-                   std::integer_sequence<T, dummy[Is]...>>::value;
-  if
-    constexpr(a_equals_zero) return join(
-        b, join(big_int<N, T>{0}, big_int<N, T>{1}));
+      std::is_same<std::integer_sequence<T, A...>, std::integer_sequence<T, dummy[Is]...>>::value;
+  if constexpr (a_equals_zero)
+    return join(b, join(big_int<N, T>{0}, big_int<N, T>{1}));
 
-  else {
+  else
+  {
     constexpr auto qr = div(b, a);
     constexpr auto rem = qr.remainder;
     constexpr auto arg1 = pad<N - rem.size()>(rem);
 
-    constexpr auto triple =
-        ext_gcd_impl(std::integer_sequence<T, arg1[Is]...>(),
-                     std::integer_sequence<T, a[Is]...>(),
-                     std::integer_sequence<T, Is...>());
+    constexpr auto triple = ext_gcd_impl(std::integer_sequence<T, arg1[Is]...>(), std::integer_sequence<T, a[Is]...>(),
+                                         std::integer_sequence<T, Is...>());
 
     constexpr auto x = first<N>(triple);
     constexpr auto y = take<N, 2 * N>(triple);
@@ -63,52 +62,52 @@ constexpr auto ext_gcd_impl(std::integer_sequence<T, A...>,
     return join(join(x, subtract_ignore_carry(z, qy)), y);
   }
 }
-}
+} // namespace detail
 
-template <typename T, T... A, T... B>
-constexpr auto ext_gcd(std::integer_sequence<T, A...>,
-                       std::integer_sequence<T, B...>) {
+export template <typename T, T... A, T... B>
+constexpr auto ext_gcd(std::integer_sequence<T, A...>, std::integer_sequence<T, B...>)
+{
   constexpr std::size_t N = std::max(sizeof...(A), sizeof...(B));
-  return detail::ext_gcd_impl(std::integer_sequence<T, A...>{},
-                              std::integer_sequence<T, B...>{},
+  return detail::ext_gcd_impl(std::integer_sequence<T, A...>{}, std::integer_sequence<T, B...>{},
                               std::make_integer_sequence<T, N>{});
 }
 
-template <typename T, T... X, T... Modulus>
-constexpr auto mod_inv(std::integer_sequence<T, X...>,
-                       std::integer_sequence<T, Modulus...>) {
+export template <typename T, T... X, T... Modulus>
+constexpr auto mod_inv(std::integer_sequence<T, X...>, std::integer_sequence<T, Modulus...>)
+{
 
-  constexpr auto triple = ext_gcd(std::integer_sequence<T, X...>{},
-                                  std::integer_sequence<T, Modulus...>{});
+  constexpr auto triple = ext_gcd(std::integer_sequence<T, X...>{}, std::integer_sequence<T, Modulus...>{});
   constexpr auto N = std::max(sizeof...(X), sizeof...(Modulus));
 
-  if (triple[0] != 1) {
+  if (triple[0] != 1)
+  {
     throw std::runtime_error("modular inverse does not exist");
-  } else {
+  }
+  else
+  {
     using namespace detail;
     constexpr auto mod_inverse = take<N, 2 * N>(triple);
     constexpr auto L = tight_length(mod_inverse);
     return first<L>(mod_inverse);
   }
 }
-}
-#endif
+} // namespace lam::cbn
 
 /*
-template <template <typename, size_t> class Array = std::array, typename T,
+export template <export template <typename, size_t> class Array = std::array, typename T,
           T... A, T... B, T... Is>
 constexpr auto ext_gcd_(std::integer_sequence<T, A...>,
                        std::integer_sequence<T, B...>) {
-  //constexpr size_t N = std::max(sizeof...(A), sizeof...(B));
+  //constexpr std::size_t N = std::max(sizeof...(A), sizeof...(B));
   //return detail::ext_gcd_impl(std::integer_sequence<T, A...>{},
   //                            std::integer_sequence<T, B...>{},
   //                            std::make_integer_sequence<T, N>{});
 
-//template <size_t L, typename T, size_t N>
+//export template <std::size_t L, typename T, std::size_t N>
 //constexpr auto ext_gcd_(big_int<N, T> a, big_int<N, T> b) {
 
   using cbn::detail::join;
-  const size_t N = sizeof...(A);
+  const std::size_t N = sizeof...(A);
 
   auto a = big_int<N, T>{A...};
   auto b = big_int<N, T>{B...};
@@ -140,9 +139,8 @@ constexpr auto ext_gcd_(std::integer_sequence<T, A...>,
 }
 */
 
-
 /*
-template <typename T, size_t N>
+export template <typename T, std::size_t N>
 constexpr auto ext_gcd(big_int<N, T> a, big_int<N, T> b) {
 
   using detail::pad;
@@ -168,7 +166,7 @@ constexpr auto ext_gcd(big_int<N, T> a, big_int<N, T> b) {
   }
 }
 
-template <typename T, size_t N,
+export template <typename T, std::size_t N,
           T... Modulus>
 constexpr auto mod_inv(big_int<N, T> a, std::integer_sequence<T, Modulus...>) {
 
@@ -183,4 +181,3 @@ constexpr auto mod_inv(big_int<N, T> a, std::integer_sequence<T, Modulus...>) {
   }
 }
 */
-

@@ -1,30 +1,30 @@
 //
 // This file is part of
 //
-// CTBignum 	
+// CTBignum
 //
 // C++ Library for Compile-Time and Run-Time Multi-Precision and Modular Arithmetic
-// 
+//
 //
 // This file is distributed under the Apache License, Version 2.0. See the LICENSE
 // file for details.
-#ifndef CT_MODULAR_EXP_HPP
-#define CT_MODULAR_EXP_HPP
 
-#include <ctbignum/bigint.hpp>
-#include <ctbignum/bitshift.hpp>
-#include <ctbignum/division.hpp>
-#include <ctbignum/montgomery.hpp>
-#include <ctbignum/slicing.hpp>
+export module lam.ctbignum:mod_exp;
 
-#include <cstddef>
-#include <limits>
+import std;
 
-namespace cbn {
+import :bigint;
+import :montgomery;
+import :division;
+import :utility;
+import :bitshift;
 
-template <std::size_t N1, std::size_t N2, typename T, T... Modulus>
-constexpr auto mod_exp(big_int<N1, T> a, big_int<N2, T> exp,
-                       std::integer_sequence<T, Modulus...> modulus) {
+namespace lam::cbn
+{
+
+export template <std::size_t N1, std::size_t N2, typename T, T... Modulus>
+constexpr auto mod_exp(big_int<N1, T> a, big_int<N2, T> exp, std::integer_sequence<T, Modulus...> modulus)
+{
   // modular exponentiation using Montgomery multiplication
 
   constexpr auto N = modulus.size();
@@ -41,10 +41,12 @@ constexpr auto mod_exp(big_int<N1, T> a, big_int<N2, T> exp,
   if (m == big_int<N, T>{1})
     return big_int<N, T>{0};
 
-  while (true) {
+  while (true)
+  {
     auto lsb = exp[0] & 1;
     exp = shift_right(exp, 1);
-    if (lsb) {
+    if (lsb)
+    {
       result = montgomery_mul(base, result, modulus);
       if (exp == zero)
         break;
@@ -55,9 +57,9 @@ constexpr auto mod_exp(big_int<N1, T> a, big_int<N2, T> exp,
   return montgomery_mul(result, big_int<N, T>{1}, modulus);
 }
 
-template <std::size_t N1, std::size_t N2, std::size_t N, typename T>
-constexpr auto mod_exp(big_int<N1, T> a, big_int<N2, T> exp,
-                       big_int<N, T> m) {
+export template <std::size_t N1, std::size_t N2, std::size_t N, typename T>
+constexpr auto mod_exp(big_int<N1, T> a, big_int<N2, T> exp, big_int<N, T> m)
+{
 
   // modular exponentiation using Montgomery multiplication with runtime modulus
 
@@ -75,10 +77,12 @@ constexpr auto mod_exp(big_int<N1, T> a, big_int<N2, T> exp,
   if (m == big_int<N, T>{1})
     return big_int<N, T>{0};
 
-  while (true) {
+  while (true)
+  {
     auto lsb = exp[0] & 1;
     exp = shift_right(exp, 1);
-    if (lsb) {
+    if (lsb)
+    {
       result = montgomery_mul(base, result, m, mprime);
       if (exp == zero)
         break;
@@ -89,5 +93,4 @@ constexpr auto mod_exp(big_int<N1, T> a, big_int<N2, T> exp,
   return montgomery_mul(result, big_int<N, T>{1}, m, mprime);
 }
 
-}
-#endif
+} // namespace lam::cbn

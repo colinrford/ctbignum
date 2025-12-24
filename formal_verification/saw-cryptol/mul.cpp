@@ -1,4 +1,6 @@
-#include <ctbignum/bigint.hpp>
-#include <ctbignum/mult.hpp>
+import std;
+import lam.ctbignum;
 
-template auto cbn::mul(big_int<3, uint64_t>, big_int<4, uint64_t>);
+using namespace lam::cbn;
+
+template auto lam::cbn::mul(big_int<3, std::uint64_t>, big_int<4, std::uint64_t>);

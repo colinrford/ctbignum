@@ -1,4 +1,6 @@
-#include <ctbignum/bigint.hpp>
-#include <ctbignum/addition.hpp>
+import std;
+import lam.ctbignum;
 
-template auto cbn::add(big_int<4, uint64_t>, big_int<4, uint64_t>);
+using namespace lam::cbn;
+
+template auto lam::cbn::add(big_int<4, std::uint64_t>, big_int<4, std::uint64_t>);

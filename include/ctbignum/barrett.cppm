@@ -1,53 +1,57 @@
 //
 // This file is part of
 //
-// CTBignum 	
+// CTBignum
 //
 // C++ Library for Compile-Time and Run-Time Multi-Precision and Modular Arithmetic
-// 
+//
 //
 // This file is distributed under the Apache License, Version 2.0. See the LICENSE
 // file for details.
-#ifndef CT_BARRETT_HPP
-#define CT_BARRETT_HPP
 
-#include <algorithm>
-#include <cstddef> // std::size_t
-#include <cmath>
+export module lam.ctbignum:barrett;
 
-#include <ctbignum/addition.hpp>
-#include <ctbignum/bigint.hpp>
-#include <ctbignum/division.hpp>
-#include <ctbignum/mult.hpp>
-#include <ctbignum/relational_ops.hpp>
-#include <ctbignum/slicing.hpp>
+import std;
 
-namespace cbn {
+import :bigint;
+import :division;
+import :mult;
+import :addition;
+import :utility;
+import :slicing;
+import :bitshift;
 
-namespace detail {
-template <typename T, T... Modulus> constexpr auto precompute_mu() {
-  big_int<sizeof...(Modulus), T> modulus = {Modulus...};
-  const std::size_t twoN = 2 * sizeof...(Modulus);
-  auto quot_rem = div(detail::unary_encoding<twoN, twoN + 1>(), modulus);
-  return quot_rem.quotient;
+namespace lam::cbn
+{
+
+namespace detail
+{
+
+template <typename T, T... Modulus> constexpr auto precompute_mu()
+{
+  constexpr std::size_t N2 = sizeof...(Modulus);
+  constexpr big_int<N2, T> modulus = {Modulus...};
+  // mu = floor(b^(2n) / modulus), where b = 2^64
+  constexpr auto pow2_2n = unary_encoding<2 * N2, 2 * N2 + 1, T>(); // b^(2n) represented
+  constexpr auto divresult = div(pow2_2n, modulus);
+  return divresult.quotient;
 }
-} // end namespace detail
 
-template <typename T, std::size_t N1, T... Modulus>
-constexpr auto barrett_reduction(big_int<N1, T> x,
-                                 std::integer_sequence<T, Modulus...>) {
+} // namespace detail
 
+export template <typename T, std::size_t N1, T... Modulus>
+constexpr auto barrett_reduction(big_int<N1, T> x, std::integer_sequence<T, Modulus...>)
+{
   // Barrett reduction, modulus as a template parameter.
-
-  using detail::skip;
   using detail::first;
-  using detail::unary_encoding;
   using detail::pad;
+  using detail::skip;
+  using detail::unary_encoding;
 
   auto mu = detail::precompute_mu<T, Modulus...>();
-  const std::size_t N2 = sizeof...(Modulus);
+  constexpr std::size_t N2 = sizeof...(Modulus);
 
-  constexpr auto L = std::max(static_cast<int>(0), static_cast<int>(N2)+1-static_cast<int>(N1)); 
+  constexpr auto L = std::max(static_cast<int>(0), static_cast<int>(N2) + 1 - static_cast<int>(N1));
   auto y = pad<L>(x);
 
   big_int<N2, T> modulus = {Modulus...};
@@ -57,8 +61,6 @@ constexpr auto barrett_reduction(big_int<N1, T> x,
                                          // of "Handbook of Applied Cryptography",
                                          // by Menezes and van Oorschot
   auto q3 = skip<3>(q2approx);           //
-
-  //auto q3 = skip<N2+1>(mul(skip<N2 - 1>(x),mu)); // this would be the exact version
 
   auto r1 = first<N2 + 1>(y);
   auto r2 = partial_mul<N2 + 1>(q3, modulus);
@@ -78,24 +80,23 @@ constexpr auto barrett_reduction(big_int<N1, T> x,
 }
 
 // specialization for length one
-template <typename T, T Modulus>
-constexpr auto barrett_reduction(big_int<1, T> x, std::integer_sequence<T, Modulus>) 
+export template <typename T, T Modulus>
+constexpr auto barrett_reduction(big_int<1, T> x, std::integer_sequence<T, Modulus>)
 {
-  return big_int<1,T>{ x[0] % Modulus }; 
-}  
+  return big_int<1, T>{x[0] % Modulus};
+}
 
-  
-template <typename T, std::size_t N1, std::size_t N2, std::size_t N3>
-constexpr auto barrett_reduction(big_int<N1, T> x, big_int<N2, T> modulus,
-                                 big_int<N3, T> mu) {
+export template <typename T, std::size_t N1, std::size_t N2, std::size_t N3>
+constexpr auto barrett_reduction(big_int<N1, T> x, big_int<N2, T> modulus, big_int<N3, T> mu)
+{
 
   // Barrett reduction, when given modulus and precomputed value mu that depends
   // on modulus as ordinary parameters.
 
-  using detail::skip;
   using detail::first;
-  using detail::unary_encoding;
   using detail::pad;
+  using detail::skip;
+  using detail::unary_encoding;
 
   auto q2approx = mul(skip<N2 - 1>(x), skip<N2 - 2>(mu));
   auto q3 = skip<3>(q2approx);
@@ -116,5 +117,5 @@ constexpr auto barrett_reduction(big_int<N1, T> x, big_int<N2, T> modulus,
 
   return first<N2>(r);
 }
-}
-#endif
+
+} // namespace lam::cbn

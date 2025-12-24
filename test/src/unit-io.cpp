@@ -1,25 +1,23 @@
 //
 // This file is part of
 //
-// CTBignum 	
+// CTBignum
 //
 // C++ Library for Compile-Time and Run-Time Multi-Precision and Modular Arithmetic
-// 
+//
 //
 // This file is distributed under the Apache License, Version 2.0. See the LICENSE
 // file for details.
 #include "catch.hpp"
 
-#include <ctbignum/bigint.hpp>
-#include <ctbignum/decimal_literals.hpp>
-#include <ctbignum/io.hpp>
+import std;
+import lam.ctbignum;
 
-#include <sstream>
+TEST_CASE("String output")
+{
 
-TEST_CASE("String output") {
-
-  using namespace cbn;
-  using namespace cbn::literals;
+  using namespace lam::cbn;
+  using namespace lam::cbn::literals;
 
   std::stringstream ss;
 
@@ -42,7 +40,4 @@ TEST_CASE("String output") {
   ss.str(std::string());
   ss << to_big_int(1_Z);
   REQUIRE(ss.str() == "1");
-
 }
-
-

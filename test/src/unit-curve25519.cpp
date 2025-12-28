@@ -1,3 +1,11 @@
+//
+// CTBignum
+//
+// C++ Library for Compile-Time and Run-Time Multi-Precision and Modular Arithmetic
+//
+//
+// This file is distributed under the Apache License, Version 2.0. See the LICENSE
+// file for details.
 
 #include "catch.hpp"
 import std;
@@ -27,12 +35,12 @@ TEST_CASE("Curve25519 Field Operations") {
     SECTION("Modular Reduction") {
         // p = 2^255 - 19.
         // Let's try x = p + 1. It should reduce to 1.
-        // We can construct this by parts if needed, but let's trust the big int literal.
         // 57896044618658097711785492504343953926634992332820282019728792003956564819950 = p + 1
         constexpr auto p_plus_1 = 57896044618658097711785492504343953926634992332820282019728792003956564819950_Z;
         constexpr Field25519 reduced{p_plus_1};
         
         bool is_p_plus_1 = (reduced.data == lam::cbn::to_big_int(1_Z));
         REQUIRE(is_p_plus_1);
+
     }
 }

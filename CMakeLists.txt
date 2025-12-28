@@ -31,27 +31,27 @@ set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 ## PROJECT
 ## name and version
 ##
-project(ctbignum VERSION 0.7.1 LANGUAGES CXX)
+project(lam_ctbignum VERSION 0.7.1 LANGUAGES CXX)
 
 ##
 ## OPTIONS
 ##
-option(CTBIGNUM_BuildTests "Build the unit tests when BUILD_TESTING is enabled." OFF)
-option(CTBIGNUM_BuildBenchmarks "Build the benchmarks." OFF)
+option(LAM_CTBIGNUM_BuildTests "Build the unit tests when BUILD_TESTING is enabled." OFF)
+option(LAM_CTBIGNUM_BuildBenchmarks "Build the benchmarks." OFF)
 
 ##
 ## CONFIGURATION
 ##
-set(CTBIGNUM_TARGET_NAME               ${PROJECT_NAME})
-set(CTBIGNUM_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/include/")
+set(LAM_CTBIGNUM_TARGET_NAME               ${PROJECT_NAME})
+set(LAM_CTBIGNUM_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/include/")
 
 ##
 ## TARGET
 ## create target and add module sources
 ##
-add_library(${CTBIGNUM_TARGET_NAME} STATIC)
+add_library(${LAM_CTBIGNUM_TARGET_NAME} STATIC)
 
-target_sources(${CTBIGNUM_TARGET_NAME}
+target_sources(${LAM_CTBIGNUM_TARGET_NAME}
     PUBLIC
     FILE_SET CXX_MODULES
     TYPE CXX_MODULES
@@ -84,7 +84,7 @@ target_sources(${CTBIGNUM_TARGET_NAME}
 ## TESTS
 ## create and configure the unit test target
 ##
-if(CTBIGNUM_BuildTests)
+if(LAM_CTBIGNUM_BuildTests)
     include(CTest)
     if(BUILD_TESTING)
         enable_testing()
@@ -92,7 +92,7 @@ if(CTBIGNUM_BuildTests)
     endif()
 endif()
 
-if(CTBIGNUM_BuildBenchmarks)
+if(LAM_CTBIGNUM_BuildBenchmarks)
     add_subdirectory(benchmarks)
 endif()
 
@@ -102,7 +102,7 @@ endif()
 ##
 include(GNUInstallDirs)
 
-install(TARGETS ${CTBIGNUM_TARGET_NAME}
+install(TARGETS ${LAM_CTBIGNUM_TARGET_NAME}
     EXPORT ${PROJECT_NAME}Targets
     FILE_SET CXX_MODULES
     DESTINATION ${CMAKE_INSTALL_LIBDIR}

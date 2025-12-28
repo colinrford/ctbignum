@@ -1,10 +1,10 @@
 #
 # This file is part of
 #
-# CTBignum 	
+# CTBignum
 #
 # C++ Library for Compile-Time and Run-Time Multi-Precision and Modular Arithmetic
-# 
+#
 #
 # This file is distributed under the Apache License, Version 2.0. See the LICENSE
 # file for details.
@@ -31,7 +31,7 @@ set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 ## PROJECT
 ## name and version
 ##
-project(ctbignum VERSION 0.2.0 LANGUAGES CXX)
+project(ctbignum VERSION 0.7.1 LANGUAGES CXX)
 
 ##
 ## OPTIONS

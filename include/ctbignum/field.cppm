@@ -32,6 +32,11 @@ export template <typename T, T... Modulus> struct ZqElement
 {
   using value_type = T;
 
+  static constexpr ZqElement additive_identity() { return ZqElement(); }
+  static constexpr ZqElement multiplicative_identity() { return ZqElement(1); }
+  static constexpr ZqElement zero() { return additive_identity(); }
+  static constexpr ZqElement one() { return multiplicative_identity(); }
+
   big_int<sizeof...(Modulus), T> data;
   explicit operator auto() const { return data; } // allow casting to big_int
   constexpr ZqElement() : data() {}

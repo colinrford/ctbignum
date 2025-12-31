@@ -20,29 +20,30 @@ import :slicing;
 namespace lam::cbn
 {
 
-export template <std::size_t N, typename T> constexpr auto shift_right(big_int<N, T> a, std::size_t k)
+// shift-right the big integer a by k bits
+// note that k must be strictly smaller than std::numeric_limits<T>::digits
+export 
+template <std::size_t N, typename T> 
+constexpr auto shift_right(big_int<N, T> a, std::size_t k)
 {
-  // shift-right the big integer a by k bits
-  // note that k must be strictly smaller than std::numeric_limits<T>::digits
   big_int<N, T> res{};
 
   if (k == 0U)
     return a;
 
   for (auto i = 0U; i < N - 1; ++i)
-  {
     res[i] = (a[i] >> k) | (a[i + 1] << (std::numeric_limits<T>::digits - k));
-  }
   res[N - 1] = (a[N - 1] >> k);
   return res;
 }
 
-export template <std::size_t N, typename T> constexpr auto shift_left(big_int<N, T> a, std::size_t k)
+// shift-left the big integer a by k bits
+// note that k must be strictly smaller than std::numeric_limits<T>::digits
+// answer has length of N+1 limbs
+export 
+template <std::size_t N, typename T> 
+constexpr auto shift_left(big_int<N, T> a, std::size_t k)
 {
-  // shift-left the big integer a by k bits
-  // note that k must be strictly smaller than std::numeric_limits<T>::digits
-  // answer has length of N+1 limbs
-
   if (k == 0U)
     return detail::pad<1>(a);
 
@@ -51,9 +52,7 @@ export template <std::size_t N, typename T> constexpr auto shift_left(big_int<N,
   res[0] = (a[0] << k);
 
   for (auto i = 1U; i < N; ++i)
-  {
     res[i] = (a[i] << k) | (a[i - 1] >> (std::numeric_limits<T>::digits - k));
-  }
 
   res[N] = a[N - 1] >> (std::numeric_limits<T>::digits - k);
   return res;

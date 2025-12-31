@@ -29,7 +29,9 @@ namespace lam::cbn
 //
 // This version is not constant-time;
 // it can be made constant-time using conditional adds/subs/swaps.
-export template <std::size_t N, typename T> constexpr auto mod_inv(big_int<N, T> const &x, big_int<N, T> const &n)
+export 
+template <std::size_t N, typename T> 
+constexpr auto mod_inv(big_int<N, T> const &x, big_int<N, T> const &n)
 {
   using detail::first;
   using detail::to_length;
@@ -49,31 +51,21 @@ export template <std::size_t N, typename T> constexpr auto mod_inv(big_int<N, T>
     T odd = a[0] & 1;
     T gteq = (a >= b);
     if (odd && gteq)
-    {
       a = subtract_ignore_carry(a, b);
-    }
     else if (odd && !gteq)
-    {
       tie(a, b, u, v) = tuple(subtract_ignore_carry(b, a), a, v, u);
-    }
     a = shift_right(a, 1);
 
     T gteq2 = (u >= v);
 
     if (odd && gteq2)
-    {
       u = subtract_ignore_carry(u, v);
-    }
     else if (odd && !gteq2)
-    {
       u = first<N>(subtract(add_same(u, n), v));
-    }
-
+    
     auto tmp = to_length<N + 1>(u);
     if (u[0] & 1)
-    {
       tmp = add(u, n);
-    }
     u = detail::first<N>(shift_right(tmp, 1));
   }
   return v;

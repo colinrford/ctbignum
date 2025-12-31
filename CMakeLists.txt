@@ -80,6 +80,8 @@ target_sources(${LAM_CTBIGNUM_TARGET_NAME}
         include/ctbignum/field.cppm
 )
 
+add_library(lam::ctbignum ALIAS ${LAM_CTBIGNUM_TARGET_NAME})
+
 ##
 ## TESTS
 ## create and configure the unit test target

@@ -21,11 +21,10 @@ import :slicing;
 namespace lam::cbn
 {
 
-export template <typename T, std::size_t N>
-
+export 
+template <typename T, std::size_t N>
 constexpr auto short_mul(big_int<N, T> a, T b)
 {
-
   using TT = typename dbl_bitlen<T>::type;
   big_int<N + 1, T> p{};
   T k = 0U;
@@ -39,11 +38,10 @@ constexpr auto short_mul(big_int<N, T> a, T b)
   return p;
 }
 
-export template <std::size_t padding_limbs = 0U, std::size_t M, std::size_t N, typename T>
-
+export 
+template <std::size_t padding_limbs = 0U, std::size_t M, std::size_t N, typename T>
 constexpr auto mul(big_int<M, T> u, big_int<N, T> v)
 {
-
   using TT = typename dbl_bitlen<T>::type;
   big_int<M + N + padding_limbs, T> w{};
   for (auto j = 0U; j < N; ++j)
@@ -64,10 +62,10 @@ constexpr auto mul(big_int<M, T> u, big_int<N, T> v)
   return w;
 }
 
-export template <std::size_t ResultLength, std::size_t M, std::size_t N, typename T>
+export 
+template <std::size_t ResultLength, std::size_t M, std::size_t N, typename T>
 constexpr auto partial_mul(big_int<M, T> u, big_int<N, T> v)
 {
-
   using TT = typename dbl_bitlen<T>::type;
   big_int<ResultLength, T> w{};
   for (auto j = 0U; j < N; ++j)
@@ -91,10 +89,9 @@ constexpr auto partial_mul(big_int<M, T> u, big_int<N, T> v)
   return w;
 }
 
-export template <typename T, std::size_t N1, std::size_t N2>
+export 
+template <typename T, std::size_t N1, std::size_t N2>
 constexpr auto operator*(big_int<N1, T> a, big_int<N2, T> b)
-{
-  return mul(a, b);
-}
+{ return mul(a, b); }
 
 } // namespace lam::cbn

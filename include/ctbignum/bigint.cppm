@@ -16,8 +16,9 @@ import std;
 namespace lam::cbn
 {
 
-export template <std::size_t N, std::unsigned_integral T = std::uint64_t> struct big_int : std::array<T, N>
-{
-};
+export 
+template <std::size_t N, std::unsigned_integral T = std::uint64_t> 
+struct big_int : std::array<T, N>
+{ };
 
 } // namespace lam::cbn

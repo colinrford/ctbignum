@@ -13,7 +13,9 @@ export module lam.ctbignum:print;
 
 import std;
 
-export template <typename Arg, typename... Args> void print(Arg &&arg, Args &&...args)
+export 
+template <typename Arg, typename... Args> 
+void print(Arg &&arg, Args &&...args)
 {
   std::cout << std::forward<Arg>(arg);
   using expander = int[];

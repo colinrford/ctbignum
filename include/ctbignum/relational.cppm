@@ -18,7 +18,8 @@ import :bigint;
 namespace lam::cbn
 {
 
-export template <typename T, std::size_t N1, std::size_t N2>
+export 
+template <typename T, std::size_t N1, std::size_t N2>
 constexpr bool operator<(big_int<N1, T> a, big_int<N2, T> b)
 {
   constexpr auto L = std::max(N1, N2);
@@ -34,25 +35,23 @@ constexpr bool operator<(big_int<N1, T> a, big_int<N2, T> b)
   return false;
 }
 
-export template <typename T, std::size_t N1, std::size_t N2>
+export 
+template <typename T, std::size_t N1, std::size_t N2>
 constexpr bool operator>(big_int<N1, T> a, big_int<N2, T> b)
-{
-  return b < a;
-}
+{ return b < a; }
 
-export template <typename T, std::size_t N1, std::size_t N2>
+export 
+template <typename T, std::size_t N1, std::size_t N2>
 constexpr bool operator<=(big_int<N1, T> a, big_int<N2, T> b)
-{
-  return !(b < a);
-}
+{ return !(b < a); }
 
-export template <typename T, std::size_t N1, std::size_t N2>
+export 
+template <typename T, std::size_t N1, std::size_t N2>
 constexpr bool operator>=(big_int<N1, T> a, big_int<N2, T> b)
-{
-  return !(a < b);
-}
+{ return !(a < b); }
 
-export template <typename T, std::size_t N1, std::size_t N2>
+export 
+template <typename T, std::size_t N1, std::size_t N2>
 constexpr bool operator==(big_int<N1, T> a, big_int<N2, T> b)
 {
   constexpr auto L = std::max(N1, N2);
@@ -66,10 +65,9 @@ constexpr bool operator==(big_int<N1, T> a, big_int<N2, T> b)
   return true;
 }
 
-export template <typename T, std::size_t N1, std::size_t N2>
+export 
+template <typename T, std::size_t N1, std::size_t N2>
 constexpr bool operator!=(big_int<N1, T> a, big_int<N2, T> b)
-{
-  return !(a == b);
-}
+{ return !(a == b); }
 
 } // end namespace lam::cbn

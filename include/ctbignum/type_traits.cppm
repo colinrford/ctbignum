@@ -16,23 +16,28 @@ import std;
 namespace lam::cbn
 {
 
-export template <typename T> struct dbl_bitlen
+export 
+template <typename T> struct dbl_bitlen
 {
   using type = void;
 };
-export template <> struct dbl_bitlen<std::uint8_t>
+export 
+template <> struct dbl_bitlen<std::uint8_t>
 {
   using type = std::uint16_t;
 };
-export template <> struct dbl_bitlen<std::uint16_t>
+export 
+template <> struct dbl_bitlen<std::uint16_t>
 {
   using type = std::uint32_t;
 };
-export template <> struct dbl_bitlen<std::uint32_t>
+export 
+template <> struct dbl_bitlen<std::uint32_t>
 {
   using type = std::uint64_t;
 };
-export template <> struct dbl_bitlen<std::uint64_t>
+export 
+template <> struct dbl_bitlen<std::uint64_t>
 {
   using type = __uint128_t;
 };

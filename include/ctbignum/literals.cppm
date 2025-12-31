@@ -25,7 +25,8 @@ namespace lam::cbn
 namespace detail
 {
 
-export template <typename T = std::uint64_t, std::size_t L = 0, char... Chars> //, std::size_t... Is>
+export 
+template <typename T = std::uint64_t, std::size_t L = 0, char... Chars> //, std::size_t... Is>
 constexpr auto chars_to_big_int(std::integer_sequence<char, Chars...>)
 {
   // might return a 'non-tight' representation, meaning that there could be
@@ -44,7 +45,8 @@ constexpr auto chars_to_big_int(std::integer_sequence<char, Chars...>)
   return num;
 }
 
-export template <typename T = std::uint64_t, char... Chars, std::size_t... Is>
+export 
+template <typename T = std::uint64_t, char... Chars, std::size_t... Is>
 constexpr auto chars_to_integer_seq(std::integer_sequence<char, Chars...>, std::index_sequence<Is...>)
 {
   constexpr auto num = detail::chars_to_big_int<T, sizeof...(Chars)>(std::integer_sequence<char, Chars...>{});
@@ -55,7 +57,8 @@ constexpr auto chars_to_integer_seq(std::integer_sequence<char, Chars...>, std::
 
 namespace literals
 {
-export template <typename T, char... Chars> constexpr auto generic_limb_literal()
+export 
+template <typename T, char... Chars> constexpr auto generic_limb_literal()
 {
   constexpr std::size_t len = sizeof...(Chars);
   constexpr std::size_t N = 1 + (10 * len) / (3 * std::numeric_limits<T>::digits);
@@ -64,20 +67,17 @@ export template <typename T, char... Chars> constexpr auto generic_limb_literal(
   return detail::take_first(num, std::make_index_sequence<L>{});
 }
 
-export template <char... Chars> constexpr auto operator""_Z() // for backwards compatibility
-{
-  return generic_limb_literal<std::uint64_t, Chars...>();
-}
+export 
+template <char... Chars> constexpr auto operator""_Z() // for backwards compatibility
+{ return generic_limb_literal<std::uint64_t, Chars...>(); }
 
-export template <char... Chars> constexpr auto operator""_Z64()
-{
-  return generic_limb_literal<std::uint64_t, Chars...>();
-}
+export 
+template <char... Chars> constexpr auto operator""_Z64()
+{ return generic_limb_literal<std::uint64_t, Chars...>(); }
 
-export template <char... Chars> constexpr auto operator""_Z32()
-{
-  return generic_limb_literal<std::uint32_t, Chars...>();
-}
+export 
+template <char... Chars> constexpr auto operator""_Z32()
+{ return generic_limb_literal<std::uint32_t, Chars...>(); }
 
 } // namespace literals
 } // namespace lam::cbn

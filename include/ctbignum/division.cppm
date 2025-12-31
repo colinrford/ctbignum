@@ -24,13 +24,16 @@ import :type_traits;
 namespace lam::cbn
 {
 
-export template <typename Q, typename R> struct DivisionResult
+export 
+template <typename Q, typename R> 
+struct DivisionResult
 {
   Q quotient;
   R remainder;
 };
 
-export template <std::size_t M, typename T>
+export 
+template <std::size_t M, typename T>
 constexpr DivisionResult<big_int<M, T>, big_int<1, T>> short_div(big_int<M, T> u, T v)
 {
   using TT = typename dbl_bitlen<T>::type;
@@ -45,25 +48,25 @@ constexpr DivisionResult<big_int<M, T>, big_int<1, T>> short_div(big_int<M, T> u
   return {q, {static_cast<T>(r)}};
 }
 
-export template <std::size_t M, std::size_t N, typename T>
+// Knuth's "Algorithm D" for multiprecision division as described in TAOCP
+// Volume 2: Seminumerical Algorithms
+// combined with short division
+
+//
+// input:
+// u  big_int<M>,      M>=N
+// v  big_int<N>
+//
+// computes:
+// quotient = floor[ u/v ]
+// rem = u % v
+//
+// returns:
+// std::pair<big_int<N+M>, big_int<N>>(quotient, rem)
+export 
+template <std::size_t M, std::size_t N, typename T>
 constexpr DivisionResult<big_int<M, T>, big_int<N, T>> div(big_int<M, T> u, big_int<N, T> v)
 {
-  // Knuth's "Algorithm D" for multiprecision division as described in TAOCP
-  // Volume 2: Seminumerical Algorithms
-  // combined with short division
-
-  //
-  // input:
-  // u  big_int<M>,      M>=N
-  // v  big_int<N>
-  //
-  // computes:
-  // quotient = floor[ u/v ]
-  // rem = u % v
-  //
-  // returns:
-  // std::pair<big_int<N+M>, big_int<N>>(quotient, rem)
-
   using TT = typename dbl_bitlen<T>::type;
   std::size_t tight_N = N;
   while (tight_N > 0 && v[tight_N - 1] == 0)
@@ -130,16 +133,14 @@ constexpr DivisionResult<big_int<M, T>, big_int<N, T>> div(big_int<M, T> u, big_
   return {q, shift_right(detail::first<N>(us), k)};
 }
 
-export template <typename T, std::size_t N1, std::size_t N2>
+export 
+template <typename T, std::size_t N1, std::size_t N2>
 constexpr auto operator/(big_int<N1, T> a, big_int<N2, T> b)
-{
-  return div(a, b).quotient;
-}
+{ return div(a, b).quotient; }
 
-export template <typename T, std::size_t N1, std::size_t N2>
+export 
+template <typename T, std::size_t N1, std::size_t N2>
 constexpr auto operator%(big_int<N1, T> a, big_int<N2, T> b)
-{
-  return div(a, b).remainder;
-}
+{ return div(a, b).remainder; }
 
 } // namespace lam::cbn

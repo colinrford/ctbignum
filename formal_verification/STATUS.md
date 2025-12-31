@@ -1,5 +1,5 @@
 # Formal Verification Status (December 2025)
-# Disclaimer: This document wasargely written by Gemini
+# Disclaimer: This document was largely written by Gemini
 
 This directory contains the formal verification wrappers and scripts for **ctbignum**.
 

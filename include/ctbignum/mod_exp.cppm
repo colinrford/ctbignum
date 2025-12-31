@@ -22,11 +22,11 @@ import :bitshift;
 namespace lam::cbn
 {
 
-export template <std::size_t N1, std::size_t N2, typename T, T... Modulus>
+// modular exponentiation using Montgomery multiplication
+export 
+template <std::size_t N1, std::size_t N2, typename T, T... Modulus>
 constexpr auto mod_exp(big_int<N1, T> a, big_int<N2, T> exp, std::integer_sequence<T, Modulus...> modulus)
 {
-  // modular exponentiation using Montgomery multiplication
-
   constexpr auto N = modulus.size();
   constexpr big_int<N, T> m{Modulus...};
   constexpr auto R_mod_m = div(detail::unary_encoding<N, N + 1>(), m).remainder;
@@ -57,12 +57,11 @@ constexpr auto mod_exp(big_int<N1, T> a, big_int<N2, T> exp, std::integer_sequen
   return montgomery_mul(result, big_int<N, T>{1}, modulus);
 }
 
-export template <std::size_t N1, std::size_t N2, std::size_t N, typename T>
+// modular exponentiation using Montgomery multiplication with runtime modulus
+export 
+template <std::size_t N1, std::size_t N2, std::size_t N, typename T>
 constexpr auto mod_exp(big_int<N1, T> a, big_int<N2, T> exp, big_int<N, T> m)
 {
-
-  // modular exponentiation using Montgomery multiplication with runtime modulus
-
   auto R_mod_m = div(detail::unary_encoding<N, N + 1, T>(), m).remainder;
   auto Rsq_mod_m = div(detail::unary_encoding<2 * N, 2 * N + 1, T>(), m).remainder;
 

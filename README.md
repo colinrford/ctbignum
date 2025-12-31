@@ -3,7 +3,7 @@
 ## This is a fork of the original ctbignum library by Niek J. Bouman
 I have taken it and modularized it in the sense of c++20 Modules. I have also 
 absorbed it into `lam::` namespace. Besides 
-- 'formal_verification' -- see the 'STATUS.md' file inside that folder
+- `formal_verification` -- see the `STATUS.md` file inside that folder
 - `libff` is currently not included in the benchmarks
 
 everything else should function the same as commit `2d27c34` of the original library.

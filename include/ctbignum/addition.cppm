@@ -20,19 +20,25 @@ import :utility;
 namespace lam::cbn
 {
 
-export template <typename T, std::size_t M, std::size_t N> constexpr auto add(big_int<M, T> a, big_int<N, T> b)
+export 
+template <typename T, std::size_t M, std::size_t N> 
+constexpr auto add(big_int<M, T> a, big_int<N, T> b)
 {
   constexpr auto L = std::max(M, N);
   return add_same(detail::pad<L - M>(a), detail::pad<L - N>(b));
 }
 
-export template <typename T, std::size_t M, std::size_t N> constexpr auto subtract(big_int<M, T> a, big_int<N, T> b)
+export 
+template <typename T, std::size_t M, std::size_t N> 
+constexpr auto subtract(big_int<M, T> a, big_int<N, T> b)
 {
   constexpr auto L = std::max(M, N);
   return subtract_same(detail::pad<L - M>(a), detail::pad<L - N>(b));
 }
 
-export template <typename T, std::size_t N> constexpr auto add_same(big_int<N, T> a, big_int<N, T> b)
+export 
+template <typename T, std::size_t N> 
+constexpr auto add_same(big_int<N, T> a, big_int<N, T> b)
 {
   T carry{};
   big_int<N + 1, T> r{};
@@ -50,7 +56,9 @@ export template <typename T, std::size_t N> constexpr auto add_same(big_int<N, T
   return r;
 }
 
-export template <typename T, std::size_t N> constexpr auto subtract_same(big_int<N, T> a, big_int<N, T> b)
+export 
+template <typename T, std::size_t N> 
+constexpr auto subtract_same(big_int<N, T> a, big_int<N, T> b)
 {
   T carry{};
   big_int<N + 1, T> r{};
@@ -68,7 +76,9 @@ export template <typename T, std::size_t N> constexpr auto subtract_same(big_int
   return r;
 }
 
-export template <typename T, std::size_t N> constexpr auto add_ignore_carry(big_int<N, T> a, big_int<N, T> b)
+export 
+template <typename T, std::size_t N> 
+constexpr auto add_ignore_carry(big_int<N, T> a, big_int<N, T> b)
 {
   T carry{};
   big_int<N, T> r{};
@@ -85,7 +95,9 @@ export template <typename T, std::size_t N> constexpr auto add_ignore_carry(big_
   return r;
 }
 
-export template <typename T, std::size_t N> constexpr auto subtract_ignore_carry(big_int<N, T> a, big_int<N, T> b)
+export 
+template <typename T, std::size_t N> 
+constexpr auto subtract_ignore_carry(big_int<N, T> a, big_int<N, T> b)
 {
   T carry{};
   big_int<N, T> r{};
@@ -102,7 +114,8 @@ export template <typename T, std::size_t N> constexpr auto subtract_ignore_carry
   return r;
 }
 
-export template <typename T, std::size_t N>
+export 
+template <typename T, std::size_t N>
 constexpr auto mod_add(big_int<N, T> a, big_int<N, T> b, big_int<N, T> modulus)
 {
   T carry{};
@@ -123,7 +136,8 @@ constexpr auto mod_add(big_int<N, T> a, big_int<N, T> b, big_int<N, T> modulus)
   return res;
 }
 
-export template <typename T, std::size_t N>
+export 
+template <typename T, std::size_t N>
 constexpr auto mod_sub(big_int<N, T> a, big_int<N, T> b, big_int<N, T> modulus)
 {
   T carry{};
@@ -143,26 +157,30 @@ constexpr auto mod_sub(big_int<N, T> a, big_int<N, T> b, big_int<N, T> modulus)
   return res;
 }
 
-export template <typename T, std::size_t N, T... Modulus>
+export 
+template <typename T, std::size_t N, T... Modulus>
 constexpr auto mod_add(big_int<N, T> a, big_int<N, T> b, std::integer_sequence<T, Modulus...>)
 {
   big_int<sizeof...(Modulus), T> modulus{{Modulus...}};
   return mod_add(a, b, modulus);
 }
 
-export template <typename T, std::size_t N1, std::size_t N2>
+export 
+template <typename T, std::size_t N1, std::size_t N2>
 constexpr auto operator+(big_int<N1, T> a, big_int<N2, T> b)
 {
   return add(a, b);
 }
 
-export template <typename T, std::size_t N1, std::size_t N2>
+export 
+template <typename T, std::size_t N1, std::size_t N2>
 constexpr auto operator-(big_int<N1, T> a, big_int<N2, T> b)
 {
   return subtract(a, b);
 }
 
-export template <typename T, std::size_t N, T... Modulus>
+export 
+template <typename T, std::size_t N, T... Modulus>
 constexpr auto mod_sub(big_int<N, T> a, big_int<N, T> b, std::integer_sequence<T, Modulus...>)
 {
   big_int<sizeof...(Modulus), T> modulus{{Modulus...}};

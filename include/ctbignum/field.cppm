@@ -182,3 +182,19 @@ constexpr bool operator!=(ZqElement<T, M...> a, ZqElement<T, M...> b)
 { return !(a == b); }
 
 } // namespace lam::cbn
+
+// Standard formatter specialization for std::print compatibility
+export namespace std 
+{
+template <typename T, T... Modulus>
+struct formatter<lam::cbn::ZqElement<T, Modulus...>> : formatter<lam::cbn::big_int<sizeof...(Modulus), T>> 
+{
+  // Inherit parse from base formatter
+  auto format(const lam::cbn::ZqElement<T, Modulus...>& elem, format_context& ctx) const 
+  {
+    // Delegate to big_int formatter using the public data member
+    using Base = formatter<lam::cbn::big_int<sizeof...(Modulus), T>>;
+    return Base::format(elem.data, ctx);
+  }
+};
+}

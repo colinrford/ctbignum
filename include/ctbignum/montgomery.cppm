@@ -24,19 +24,19 @@ import :utility;
 namespace lam::cbn
 {
 
-export template <typename T, std::size_t N1, T... Modulus, std::size_t N2 = sizeof...(Modulus)>
+// Montgomery reduction with compile-time modulus
+//
+// inputs:
+//  A       (2n limbs)  number to be reduced
+//  m       ( n limbs)  modulus
+//
+// output:
+//  T R^-1 mod m,       where R = (2^64)^n
+//
+export 
+template <typename T, std::size_t N1, T... Modulus, std::size_t N2 = sizeof...(Modulus)>
 constexpr auto montgomery_reduction(big_int<N1, T> A, std::integer_sequence<T, Modulus...>)
 {
-  // Montgomery reduction with compile-time modulus
-  //
-  // inputs:
-  //  A       (2n limbs)  number to be reduced
-  //  m       ( n limbs)  modulus
-  //
-  // output:
-  //  T R^-1 mod m,       where R = (2^64)^n
-  //
-
   using detail::first;
   using detail::limbwise_shift_left;
   using detail::pad;
@@ -65,11 +65,11 @@ constexpr auto montgomery_reduction(big_int<N1, T> A, std::integer_sequence<T, M
   return first<N2>(result);
 }
 
-export template <typename T, std::size_t N, T... Modulus>
+// Montgomery multiplication with compile-time modulus
+export 
+template <typename T, std::size_t N, T... Modulus>
 constexpr auto montgomery_mul(big_int<N, T> x, big_int<N, T> y, std::integer_sequence<T, Modulus...>)
 {
-  // Montgomery multiplication with compile-time modulus
-
   using detail::first;
   using detail::pad;
   using detail::skip;
@@ -129,20 +129,20 @@ template <typename T> using Identity_t = typename Identity<T>::type;
 
 /// Note: the type of the last parameter is not deduced from itself, but from
 /// the other parameters instead.
-export template <typename T, std::size_t N1, std::size_t N2>
+// Montgomery reduction with runtime parameters
+//
+// inputs:
+//  A       (2n limbs)  number to be reduced
+//  m       ( n limbs)  modulus
+//  mprime  (uint64_t)  mprime = - m^{-1} mod 2^64
+//
+// output:
+//  T R^-1 mod m,       where R = (2^64)^n
+//
+export 
+template <typename T, std::size_t N1, std::size_t N2>
 constexpr auto montgomery_reduction(big_int<N1, T> A, big_int<N2, T> m, detail::Identity_t<T> mprime)
 {
-  // Montgomery reduction with runtime parameters
-  //
-  // inputs:
-  //  A       (2n limbs)  number to be reduced
-  //  m       ( n limbs)  modulus
-  //  mprime  (uint64_t)  mprime = - m^{-1} mod 2^64
-  //
-  // output:
-  //  T R^-1 mod m,       where R = (2^64)^n
-  //
-
   using detail::first;
   using detail::limbwise_shift_left;
   using detail::pad;
@@ -169,12 +169,11 @@ constexpr auto montgomery_reduction(big_int<N1, T> A, big_int<N2, T> m, detail::
 
 /// Note: the type of the last parameter is not deduced from itself, but from
 /// the other parameters instead.
-export template <typename T, std::size_t N>
+// Montgomery multiplication with runtime parameters
+export 
+template <typename T, std::size_t N>
 constexpr auto montgomery_mul(big_int<N, T> x, big_int<N, T> y, big_int<N, T> m, detail::Identity_t<T> mprime)
 {
-
-  // Montgomery multiplication with runtime parameters
-
   using detail::first;
   using detail::pad;
   using detail::skip;
@@ -217,11 +216,11 @@ constexpr auto montgomery_mul(big_int<N, T> x, big_int<N, T> y, big_int<N, T> m,
 
 namespace detail
 {
-export template <typename T>
-
+// inverse modulo 2^(limb-width) (needed for the montgomery representation)
+export 
+template <typename T>
 constexpr T inverse_mod(T a)
 {
-  // inverse modulo 2^(limb-width) (needed for the montgomery representation)
   T x = ((a << 1 ^ a) & 4) << 1 ^ a;
   x += x - a * x * x;
   if constexpr (std::numeric_limits<T>::digits >= 16)

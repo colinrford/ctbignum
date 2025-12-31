@@ -19,7 +19,9 @@ import :division;
 namespace lam::cbn
 {
 
-export template <typename T> struct Radix10
+export 
+template <typename T> 
+struct Radix10
 {
   using character_t = char;
   static constexpr T radix = 10;
@@ -31,7 +33,9 @@ export template <typename T> struct Radix10
   static constexpr const char *prefix = "";
 };
 
-export template <typename T> struct Radix16
+export 
+template <typename T> 
+struct Radix16
 {
   using character_t = char;
   static constexpr T radix = 16;
@@ -49,7 +53,9 @@ export template <typename T> struct Radix16
   static constexpr const char *prefix = "0x";
 };
 
-export template <class Radix, std::size_t N, typename T> auto convert_radix(cbn::big_int<N, T> obj)
+export 
+template <class Radix, std::size_t N, typename T> 
+auto convert_radix(cbn::big_int<N, T> obj)
 {
   // Return a representation of the big-integer in a user-specified radix
   //
@@ -71,7 +77,9 @@ export template <class Radix, std::size_t N, typename T> auto convert_radix(cbn:
   return radix_repr;
 }
 
-export template <std::size_t N, typename T> std::ostream &operator<<(std::ostream &strm, cbn::big_int<N, T> num)
+export 
+template <std::size_t N, typename T> 
+std::ostream &operator<<(std::ostream &strm, cbn::big_int<N, T> num)
 {
 
   // Write a base-10 representation of the big-integer to the stream

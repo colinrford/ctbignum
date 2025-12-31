@@ -27,7 +27,8 @@ namespace lam::cbn
 namespace detail
 {
 
-template <typename T, T... Modulus> constexpr auto precompute_mu()
+template <typename T, T... Modulus> 
+constexpr auto precompute_mu()
 {
   constexpr std::size_t N2 = sizeof...(Modulus);
   constexpr big_int<N2, T> modulus = {Modulus...};
@@ -39,7 +40,8 @@ template <typename T, T... Modulus> constexpr auto precompute_mu()
 
 } // namespace detail
 
-export template <typename T, std::size_t N1, T... Modulus>
+export 
+template <typename T, std::size_t N1, T... Modulus>
 constexpr auto barrett_reduction(big_int<N1, T> x, std::integer_sequence<T, Modulus...>)
 {
   // Barrett reduction, modulus as a template parameter.
@@ -80,19 +82,19 @@ constexpr auto barrett_reduction(big_int<N1, T> x, std::integer_sequence<T, Modu
 }
 
 // specialization for length one
-export template <typename T, T Modulus>
+export 
+template <typename T, T Modulus>
 constexpr auto barrett_reduction(big_int<1, T> x, std::integer_sequence<T, Modulus>)
 {
   return big_int<1, T>{x[0] % Modulus};
 }
 
-export template <typename T, std::size_t N1, std::size_t N2, std::size_t N3>
+// Barrett reduction, when given modulus and precomputed value mu that depends
+  // on modulus as ordinary parameters.
+export 
+template <typename T, std::size_t N1, std::size_t N2, std::size_t N3>
 constexpr auto barrett_reduction(big_int<N1, T> x, big_int<N2, T> modulus, big_int<N3, T> mu)
 {
-
-  // Barrett reduction, when given modulus and precomputed value mu that depends
-  // on modulus as ordinary parameters.
-
   using detail::first;
   using detail::pad;
   using detail::skip;

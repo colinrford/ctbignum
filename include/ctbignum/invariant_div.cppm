@@ -26,7 +26,8 @@ namespace lam::cbn
 namespace detail
 {
 
-export template <std::size_t N, typename T = std::uint64_t, T... Divisor, std::size_t... Is>
+export 
+template <std::size_t N, typename T = std::uint64_t, T... Divisor, std::size_t... Is>
 constexpr auto precompute_m_prime_nontight(std::integer_sequence<T, Divisor...>, std::index_sequence<Is...>)
 {
   constexpr auto D = sizeof...(Divisor);
@@ -42,7 +43,8 @@ constexpr auto precompute_m_prime_nontight(std::integer_sequence<T, Divisor...>,
   return std::integer_sequence<T, mp[Is]...>{};
 }
 
-export template <std::size_t N, typename T = std::uint64_t, T... Divisor>
+export 
+template <std::size_t N, typename T = std::uint64_t, T... Divisor>
 constexpr auto precompute_m_prime(std::integer_sequence<T, Divisor...>)
 {
   auto m = precompute_m_prime_nontight<N, T>(std::integer_sequence<T, Divisor...>{}, std::make_index_sequence<N>{});
@@ -51,19 +53,19 @@ constexpr auto precompute_m_prime(std::integer_sequence<T, Divisor...>)
 
 } // namespace detail
 
-export template <typename T, std::size_t N, T... Divisor>
+// Integer division with compile-time divisor
+// as described in "Division by Invariant Integers using Multiplication",
+// by Granlund and Montgomery, 1994
+// https://gmplib.org/~tege/divcnst-pldi94.pdf
+//
+// inputs:
+//  n           divident
+//  Divisor...  compile-time divisor
+//
+export 
+template <typename T, std::size_t N, T... Divisor>
 constexpr auto quotient(big_int<N, T> n, std::integer_sequence<T, Divisor...>)
 {
-  // Integer division with compile-time divisor
-  // as described in "Division by Invariant Integers using Multiplication",
-  // by Granlund and Montgomery, 1994
-  // https://gmplib.org/~tege/divcnst-pldi94.pdf
-  //
-  // inputs:
-  //  n           divident
-  //  Divisor...  compile-time divisor
-  //
-
   using detail::skip;
   using detail::to_length;
 
@@ -73,8 +75,7 @@ constexpr auto quotient(big_int<N, T> n, std::integer_sequence<T, Divisor...>)
   else if constexpr (d == big_int<1, T>{static_cast<T>(1)})
     return n;
   else
-  {
-    // Compile-time precomputation of m_prime
+  { // Compile-time precomputation of m_prime
     constexpr auto ell = detail::bit_length(d - big_int<1, T>{1});
     constexpr auto w = std::numeric_limits<T>::digits;
     constexpr auto m_prime = to_big_int(detail::precompute_m_prime<N>(std::integer_sequence<T, Divisor...>{}));
@@ -88,16 +89,18 @@ constexpr auto quotient(big_int<N, T> n, std::integer_sequence<T, Divisor...>)
   }
 }
 
-export template <typename T, std::size_t N, T... Modulus>
-constexpr auto mod(big_int<N, T> n, std::integer_sequence<T, Modulus...>)
 // Constant-time modulo operation with a fixed modulus
+export 
+template <typename T, std::size_t N, T... Modulus>
+constexpr auto mod(big_int<N, T> n, std::integer_sequence<T, Modulus...>)
 {
   auto d = quotient(n, std::integer_sequence<T, Modulus...>{});
   constexpr auto M = sizeof...(Modulus);
   return detail::to_length<M>(subtract_ignore_carry(n, partial_mul<N>(big_int<M, T>{Modulus...}, d)));
 }
 
-export template <typename T, std::size_t N, T... Modulus>
+export 
+template <typename T, std::size_t N, T... Modulus>
 constexpr DivisionResult<big_int<N, T>, big_int<sizeof...(Modulus), T>> div(big_int<N, T> n,
                                                                             std::integer_sequence<T, Modulus...>)
 {

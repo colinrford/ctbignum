@@ -43,7 +43,7 @@ foreach(file ${files})
     target_include_directories(${testcase} PRIVATE "thirdparty/catch")
     
     # Link against the ctbignum module library
-    target_link_libraries(${testcase} PRIVATE ctbignum)
+    target_link_libraries(${testcase} PRIVATE lam::ctbignum)
 
     if (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
         target_compile_options(${testcase} PRIVATE -Wno-deprecated -Wno-float-equal -fconstexpr-steps=2300000)
@@ -71,17 +71,17 @@ find_library(GMP_LIBRARY NAMES gmp)
 
 if(NTL_INCLUDE_DIR AND NTL_LIBRARY AND GMP_LIBRARY)
     add_executable(test-modinv $<TARGET_OBJECTS:catch_main> src/unit-modinv.cpp)
-    target_link_libraries(test-modinv PRIVATE ctbignum ${NTL_LIBRARY} ${GMP_LIBRARY})
+    target_link_libraries(test-modinv PRIVATE lam::ctbignum ${NTL_LIBRARY} ${GMP_LIBRARY})
     target_include_directories(test-modinv PRIVATE "thirdparty/catch" ${NTL_INCLUDE_DIR})
     
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        target_compile_options(test-modinv PRIVATE -fprebuilt-module-path=${CMAKE_BINARY_DIR}/CMakeFiles/ctbignum.dir/include/ctbignum)
+        target_compile_options(test-modinv PRIVATE -fprebuilt-module-path=${CMAKE_BINARY_DIR}/CMakeFiles/lam_ctbignum.dir/include/ctbignum)
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         target_compile_options(test-modinv PRIVATE -fmodules-ts)
     endif()
 
     # We need to manually add the dependency on the library's module file for the test executable
-    add_dependencies(test-modinv ctbignum)
+    add_dependencies(test-modinv lam_ctbignum)
 
     # Set the C++ standard for the test target
     set_property(TARGET test-modinv PROPERTY CXX_STANDARD 23)

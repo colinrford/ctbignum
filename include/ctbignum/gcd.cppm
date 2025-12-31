@@ -25,11 +25,11 @@ namespace lam::cbn
 namespace detail
 {
 
-export template <typename T, T... A, T... B, T... Is, std::size_t N = sizeof...(Is)>
+export 
+template <typename T, T... A, T... B, T... Is, std::size_t N = sizeof...(Is)>
 constexpr auto ext_gcd_impl(std::integer_sequence<T, A...>, std::integer_sequence<T, B...>,
                             std::integer_sequence<T, Is...>)
 {
-
   using detail::first;
   using detail::join;
   using detail::pad;
@@ -64,7 +64,8 @@ constexpr auto ext_gcd_impl(std::integer_sequence<T, A...>, std::integer_sequenc
 }
 } // namespace detail
 
-export template <typename T, T... A, T... B>
+export 
+template <typename T, T... A, T... B>
 constexpr auto ext_gcd(std::integer_sequence<T, A...>, std::integer_sequence<T, B...>)
 {
   constexpr std::size_t N = std::max(sizeof...(A), sizeof...(B));
@@ -72,7 +73,8 @@ constexpr auto ext_gcd(std::integer_sequence<T, A...>, std::integer_sequence<T, 
                               std::make_integer_sequence<T, N>{});
 }
 
-export template <typename T, T... X, T... Modulus>
+export 
+template <typename T, T... X, T... Modulus>
 constexpr auto mod_inv(std::integer_sequence<T, X...>, std::integer_sequence<T, Modulus...>)
 {
 
@@ -80,9 +82,7 @@ constexpr auto mod_inv(std::integer_sequence<T, X...>, std::integer_sequence<T, 
   constexpr auto N = std::max(sizeof...(X), sizeof...(Modulus));
 
   if (triple[0] != 1)
-  {
     throw std::runtime_error("modular inverse does not exist");
-  }
   else
   {
     using namespace detail;
@@ -140,7 +140,8 @@ constexpr auto ext_gcd_(std::integer_sequence<T, A...>,
 */
 
 /*
-export template <typename T, std::size_t N>
+export 
+template <typename T, std::size_t N>
 constexpr auto ext_gcd(big_int<N, T> a, big_int<N, T> b) {
 
   using detail::pad;

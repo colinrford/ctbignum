@@ -33,16 +33,16 @@ foreach(file ${files})
 
     add_executable(${benchmark_name} ${file})
 
-    target_link_libraries(${benchmark_name} PRIVATE ctbignum benchmark::benchmark ${NTL_LIBRARIES} ${GMP_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+    target_link_libraries(${benchmark_name} PRIVATE lam_ctbignum benchmark::benchmark ${NTL_LIBRARIES} ${GMP_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
     target_include_directories(${benchmark_name} PRIVATE ${NTL_INCLUDES} ${GMP_INCLUDES})
 
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        target_compile_options(${benchmark_name} PRIVATE -fprebuilt-module-path=${CMAKE_BINARY_DIR}/CMakeFiles/ctbignum.dir/include/ctbignum)
+        target_compile_options(${benchmark_name} PRIVATE -fprebuilt-module-path=${CMAKE_BINARY_DIR}/CMakeFiles/lam_ctbignum.dir/include/ctbignum)
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         target_compile_options(${benchmark_name} PRIVATE -fmodules-ts)
     endif()
 
-    add_dependencies(${benchmark_name} ctbignum)
+    add_dependencies(${benchmark_name} lam_ctbignum)
 
     set_target_properties(${benchmark_name} PROPERTIES
         CXX_STANDARD 23

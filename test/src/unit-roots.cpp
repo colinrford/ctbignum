@@ -166,6 +166,18 @@ TEST_CASE("Modular square root - Tonelli-Shanks")
     auto result = sqrt(four);
     REQUIRE_FALSE(result.has_value());
   }
+
+  SECTION("Carmichael number 1729 (safety check)")
+  {
+    // 1729 is a Carmichael number (pseudoprime).
+    // Miller-Rabin should correctly identify it as composite and return nullopt.
+    using GF = decltype(Zq(1729_Z));
+    constexpr GF four{4};
+    // 4 is a square mod 1729 (2^2), but we reject it because 1729 is composite.
+    
+    auto result = sqrt(four);
+    REQUIRE_FALSE(result.has_value());
+  }
 }
 
 TEST_CASE("is_quadratic_residue")

@@ -180,6 +180,84 @@ TEST_CASE("Modular square root - Tonelli-Shanks")
   }
 }
 
+// Helper for fuzzing
+template <typename T>
+class Randomizer
+{
+public:
+  template <size_t N>
+  void operator()(lam::cbn::big_int<N, T>& a)
+  {
+    for (auto& limb : a)
+      limb = distribution(generator);
+  }
+
+private:
+  std::mt19937 generator{std::random_device{}()};
+  std::uniform_int_distribution<T> distribution;
+};
+
+TEST_CASE("Stress Tests and Edge Cases")
+{
+  using namespace lam::cbn;
+  using namespace lam::cbn::literals;
+
+  SECTION("High valuation of 2: p = 65537 (2^16 + 1)")
+  {
+    // 65537 is F4. p-1 = 2^16. S = 16.
+    // This exercises the Tonelli-Shanks loop depth.
+    using GF = decltype(Zq(65537_Z));
+    
+    // 3 is a primitive root mod 65537. 3^2 = 9.
+    constexpr GF nine{9};
+    auto result = sqrt(nine);
+    REQUIRE(result.has_value());
+    REQUIRE((result->data == to_big_int(3_Z) || result->data == (to_big_int(65537_Z) - to_big_int(3_Z))));
+    
+    // Check various powers
+    constexpr GF val{123}; 
+    auto sq = val * val;
+    auto root = sqrt(sq);
+    REQUIRE(root.has_value());
+    REQUIRE(((*root * *root).data == sq.data));
+  }
+  
+  SECTION("Randomized Fuzzing on secp256k1")
+  {
+    constexpr auto p_seq = 115792089237316195423570985008687907853269984665640564039457584007908834671663_Z;
+    using GF = decltype(Zq(p_seq));
+    constexpr auto p_val = to_big_int(p_seq);
+    
+    Randomizer<uint64_t> randomizer;
+    big_int<4, uint64_t> rand_data;
+    
+    // Run 50 random iterations
+    for(int i = 0; i < 50; ++i) {
+      // Generate random valid field element
+      do {
+        randomizer(rand_data);
+      } while(rand_data >= p_val); // Ensure < p
+      
+      GF r{rand_data};
+      
+      // Square it
+      auto sq = r * r;
+      
+      // Compute sqrt
+      auto root = sqrt(sq);
+      
+      // Verify
+      REQUIRE(root.has_value());
+      auto root_sq = (*root) * (*root);
+      REQUIRE(root_sq.data == sq.data);
+      
+      bool is_orig = (root->data == r.data);
+      bool is_neg = (root->data == (GF{0} - r).data);
+      REQUIRE((is_orig || is_neg));
+    }
+  }
+}
+
 TEST_CASE("is_quadratic_residue")
 {
   using namespace lam::cbn;

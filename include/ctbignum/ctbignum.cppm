@@ -41,3 +41,6 @@ export import :field;
 // I/O and literals
 export import :io;
 export import :literals;
+
+// Roots (modular square root)
+export import :roots;

@@ -1,10 +1,10 @@
 #
 # This file is part of
 #
-# CTBignum 	
+# CTBignum
 #
 # C++ Library for Compile-Time and Run-Time Multi-Precision and Modular Arithmetic
-# 
+#
 #
 # This file is distributed under the Apache License, Version 2.0. See the LICENSE
 # file for details.
@@ -41,7 +41,7 @@ foreach(file ${files})
 
     target_compile_definitions(${testcase} PRIVATE CATCH_CONFIG_FAST_COMPILE)
     target_include_directories(${testcase} PRIVATE "thirdparty/catch")
-    
+
     # Link against the ctbignum module library
     target_link_libraries(${testcase} PRIVATE lam::ctbignum)
 
@@ -70,29 +70,29 @@ find_library(NTL_LIBRARY NAMES ntl)
 find_library(GMP_LIBRARY NAMES gmp)
 
 if(NTL_INCLUDE_DIR AND NTL_LIBRARY AND GMP_LIBRARY)
-    add_executable(test-modinv $<TARGET_OBJECTS:catch_main> src/unit-modinv.cpp)
-    target_link_libraries(test-modinv PRIVATE lam::ctbignum ${NTL_LIBRARY} ${GMP_LIBRARY})
-    target_include_directories(test-modinv PRIVATE "thirdparty/catch" ${NTL_INCLUDE_DIR})
-    
+    add_executable(unit-modinv $<TARGET_OBJECTS:catch_main> src/unit-modinv.cpp)
+    target_link_libraries(unit-modinv PRIVATE lam::ctbignum ${NTL_LIBRARY} ${GMP_LIBRARY})
+    target_include_directories(unit-modinv PRIVATE "thirdparty/catch" ${NTL_INCLUDE_DIR})
+
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        target_compile_options(test-modinv PRIVATE -fprebuilt-module-path=${CMAKE_BINARY_DIR}/CMakeFiles/lam_ctbignum.dir/include/ctbignum)
+        target_compile_options(unit-modinv PRIVATE -fprebuilt-module-path=${CMAKE_BINARY_DIR}/CMakeFiles/lam_ctbignum.dir/include/ctbignum)
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-        target_compile_options(test-modinv PRIVATE -fmodules-ts)
+        target_compile_options(unit-modinv PRIVATE -fmodules-ts)
     endif()
 
     # We need to manually add the dependency on the library's module file for the test executable
-    add_dependencies(test-modinv lam_ctbignum)
+    add_dependencies(unit-modinv lam::ctbignum)
 
     # Set the C++ standard for the test target
-    set_property(TARGET test-modinv PROPERTY CXX_STANDARD 23)
-    set_property(TARGET test-modinv PROPERTY CXX_STANDARD_REQUIRED ON)
-    set_property(TARGET test-modinv PROPERTY CXX_EXTENSIONS OFF)
+    set_property(TARGET unit-modinv PROPERTY CXX_STANDARD 23)
+    set_property(TARGET unit-modinv PROPERTY CXX_STANDARD_REQUIRED ON)
+    set_property(TARGET unit-modinv PROPERTY CXX_EXTENSIONS OFF)
 
     # Enable module scanning for the test
-    set_property(TARGET test-modinv PROPERTY CXX_SCAN_FOR_MODULES ON)
-    set_property(TARGET test-modinv PROPERTY CXX_MODULE_STD ON)
+    set_property(TARGET unit-modinv PROPERTY CXX_SCAN_FOR_MODULES ON)
+    set_property(TARGET unit-modinv PROPERTY CXX_MODULE_STD ON)
 
-    add_test(NAME test-modinv_run COMMAND test-modinv)
+    add_test(NAME unit-modinv_run COMMAND unit-modinv)
 else()
     message(STATUS "NTL or GMP not found. Skipping modinv tests.")
 endif()

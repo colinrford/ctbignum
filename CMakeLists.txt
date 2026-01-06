@@ -42,7 +42,7 @@ option(LAM_CTBIGNUM_BuildBenchmarks "Build the benchmarks." OFF)
 ##
 ## CONFIGURATION
 ##
-set(LAM_CTBIGNUM_TARGET_NAME               ${PROJECT_NAME})
+set(LAM_CTBIGNUM_TARGET_NAME               ctbignum)
 set(LAM_CTBIGNUM_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/include/")
 
 ##
@@ -81,6 +81,7 @@ target_sources(${LAM_CTBIGNUM_TARGET_NAME}
 )
 
 add_library(lam::ctbignum ALIAS ${LAM_CTBIGNUM_TARGET_NAME})
+set_target_properties(ctbignum PROPERTIES OUTPUT_NAME lam_ctbignum)
 
 ##
 ## TESTS

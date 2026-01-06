@@ -106,6 +106,22 @@ TEST_CASE("Modular square root - Tonelli-Shanks")
     REQUIRE(squared.data == four.data);
   }
 
+  SECTION("Large prime: secp256k1 prime")
+  {
+    // p = 2^256 - 2^32 - 977
+    constexpr auto secp256k1_p = 115792089237316195423570985008687907853269984665640564039457584007908834671663_Z;
+    using GF = decltype(Zq(secp256k1_p));
+    
+    // sqrt(4) = 2
+    constexpr GF four{4};
+    constexpr GF two{2};
+    
+    // This implicitly tests is_prime(secp256k1_p)
+    auto result = sqrt(four);
+    REQUIRE(result.has_value());
+    REQUIRE((result->data == two.data || result->data == (GF{0} - two).data));
+  }
+
   SECTION("Composite modulus (safety check): mod 15")
   {
     // 15 = 3 * 5, not a prime. sqrt should return nullopt.

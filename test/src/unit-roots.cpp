@@ -256,6 +256,40 @@ TEST_CASE("Stress Tests and Edge Cases")
       REQUIRE((is_orig || is_neg));
     }
   }
+
+  SECTION("Cube Root Fuzzing on secp256k1 (p = 1 mod 3 - Hard Case)")
+  {
+    // secp256k1 p is = 1 mod 3.
+    // This means only 1/3 of elements have cube roots.
+    // And there are 3 cube roots for any cubic residue.
+    
+    constexpr auto p_seq = 115792089237316195423570985008687907853269984665640564039457584007908834671663_Z;
+    using GF = decltype(Zq(p_seq));
+    constexpr auto p_val = to_big_int(p_seq);
+    
+    Randomizer<uint64_t> randomizer;
+    big_int<4, uint64_t> rand_data;
+    
+    for(int i = 0; i < 50; ++i) {
+      // 1. Generate valid random r
+      do { randomizer(rand_data); } while(rand_data >= p_val);
+      GF r{rand_data};
+      
+      // 2. Compute cubic residue x = r^3
+      auto x = r * r * r;
+      
+      // 3. Verify cbrt(x) returns nullopt (currently unsupported for p=1 mod 3)
+      auto root = cbrt(x);
+      REQUIRE_FALSE(root.has_value());
+      
+      // 4. Test random element (likely non-residue)
+      do { randomizer(rand_data); } while(rand_data >= p_val);
+      GF z{rand_data};
+      
+      auto z_root = cbrt(z);
+      REQUIRE_FALSE(z_root.has_value());
+    }
+  }
 }
 
 TEST_CASE("is_quadratic_residue")

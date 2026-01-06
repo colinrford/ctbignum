@@ -209,14 +209,15 @@ constexpr auto cbrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
     constexpr auto exp = div(subtract_ignore_carry(add_ignore_carry(p, p), one), three).quotient;
     auto result = mod_exp(n.data, exp, std::integer_sequence<T, Modulus...>{});
     return ZqElement<T, Modulus...>{result};
-  } else
-  { // p ≡ 1 (mod 3): check if n is a cubic residue
-    constexpr auto residue_exp = div(p_minus_1, three).quotient;
-    if (mod_exp(n.data, residue_exp, std::integer_sequence<T, Modulus...>{}) != one)
-      return std::nullopt;
-    auto three_inv = mod_inv(three, p_minus_1);  // 3^(-1) mod (p - 1)
-    auto result = mod_exp(n.data, three_inv, std::integer_sequence<T, Modulus...>{});
-    return ZqElement<T, Modulus...>{result};
+  }
+  else
+  {
+    // Case p ≡ 1 (mod 3)
+    // In this case, 3 divides p-1, so 3 is not invertible mod p-1.
+    // A simple exponentiation formula does not exist.
+    // Proper implementation requires Adleman-Manders-Miller algorithm (cubic analog of Tonelli-Shanks).
+    // For now, we return nullopt to avoid returning incorrect results.
+    return std::nullopt;
   }
 }
 

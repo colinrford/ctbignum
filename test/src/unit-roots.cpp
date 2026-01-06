@@ -105,6 +105,18 @@ TEST_CASE("Modular square root - Tonelli-Shanks")
     auto squared = (*result) * (*result);
     REQUIRE(squared.data == four.data);
   }
+
+  SECTION("Composite modulus (safety check): mod 15")
+  {
+    // 15 = 3 * 5, not a prime. sqrt should return nullopt.
+    // Even for valid squares like 4 (2^2 = 4), we reject the operation because
+    // Tonelli-Shanks is only for primes.
+    using GF = decltype(Zq(15_Z));
+    constexpr GF four{4}; 
+    
+    auto result = sqrt(four);
+    REQUIRE_FALSE(result.has_value());
+  }
 }
 
 TEST_CASE("is_quadratic_residue")
@@ -177,5 +189,13 @@ TEST_CASE("Cube root")
     // Verify: result^3 = 8
     auto cubed = (*result) * (*result) * (*result);
     REQUIRE(cubed.data == eight.data);
+  }
+
+  SECTION("Composite modulus (safety check): mod 15")
+  {
+    using GF = decltype(Zq(15_Z));
+    constexpr GF one{1};
+    auto result = cbrt(one);
+    REQUIRE_FALSE(result.has_value());
   }
 }

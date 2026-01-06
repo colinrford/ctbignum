@@ -112,14 +112,35 @@ TEST_CASE("Modular square root - Tonelli-Shanks")
     constexpr auto secp256k1_p = 115792089237316195423570985008687907853269984665640564039457584007908834671663_Z;
     using GF = decltype(Zq(secp256k1_p));
     
-    // sqrt(4) = 2
+    // sqrt(4) = 2 (Trivial check)
     constexpr GF four{4};
     constexpr GF two{2};
-    
-    // This implicitly tests is_prime(secp256k1_p)
     auto result = sqrt(four);
     REQUIRE(result.has_value());
     REQUIRE((result->data == two.data || result->data == (GF{0} - two).data));
+
+    // Non-trivial check: Pick a large number, square it, then take sqrt
+    // Let's us a large arbitrary number < p
+    // 2^200 + 12345
+    constexpr auto large_val = 1606938044258990275541962092341162602522202993782792835301376_Z; // approx 2^200
+    constexpr GF large_elem{large_val};
+    
+    // Calculate square: s = x^2
+    constexpr auto square = large_elem * large_elem;
+    
+    // Recover root: r = sqrt(s)
+    auto root = sqrt(square);
+    REQUIRE(root.has_value());
+    
+    // Check: r == x OR r == -x
+    // Note: -x in field is (0 - x)
+    constexpr GF neg_large_elem = GF{0} - large_elem;
+    
+    bool correct_root = (root->data == large_elem.data) || (root->data == neg_large_elem.data);
+    REQUIRE(correct_root);
+    
+    // Verify square property explicitly
+    REQUIRE(((*root) * (*root)).data == square.data);
   }
 
   SECTION("Composite modulus (safety check): mod 15")

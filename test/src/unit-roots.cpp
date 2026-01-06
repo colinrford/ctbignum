@@ -143,6 +143,18 @@ TEST_CASE("Modular square root - Tonelli-Shanks")
     REQUIRE(((*root) * (*root)).data == square.data);
   }
 
+  SECTION("Compile-Time Execution (constexpr)")
+  {
+    using GF = decltype(Zq(17_Z));
+    
+    // This MUST compile if sqrt is truly constexpr
+    constexpr GF four{4};
+    constexpr auto root = sqrt(four);
+    
+    static_assert(root.has_value());
+    static_assert(root->data == to_big_int(2_Z) || root->data == to_big_int(15_Z));
+  }
+
   SECTION("Composite modulus (safety check): mod 15")
   {
     // 15 = 3 * 5, not a prime. sqrt should return nullopt.

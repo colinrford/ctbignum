@@ -22,7 +22,6 @@ private:
 
 TEST_CASE("Runtime modular inverses")
 {
-
   using namespace lam::cbn;
   using namespace lam::cbn::literals;
 
@@ -35,7 +34,6 @@ TEST_CASE("Runtime modular inverses")
 
   for (auto i = 0; i < 100; ++i)
   {
-
     NTL::ZZ m_ZZ = NTL::RandomPrime_ZZ(255);
     std::copy(NTL::ZZ_limbs_get(m_ZZ), NTL::ZZ_limbs_get(m_ZZ) + 4, m.begin());
 

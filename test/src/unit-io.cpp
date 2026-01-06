@@ -15,7 +15,6 @@ import lam.ctbignum;
 
 TEST_CASE("String output")
 {
-
   using namespace lam::cbn;
   using namespace lam::cbn::literals;
 

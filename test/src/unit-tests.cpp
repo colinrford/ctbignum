@@ -18,7 +18,6 @@ using namespace lam::cbn::literals;
 
 TEST_CASE("Addition")
 {
-
   using namespace lam::cbn;
 
   constexpr big_int<2> a = {{0UL, 9223372036854775808UL}};
@@ -35,7 +34,6 @@ TEST_CASE("Addition")
 
 TEST_CASE("subtraction")
 {
-
   using namespace lam::cbn;
   using lam::cbn::detail::first;
   using lam::cbn::detail::unary_encoding;
@@ -57,7 +55,6 @@ TEST_CASE("subtraction")
 
 TEST_CASE("For any prime p, assert that p + 0 = 0 mod p")
 {
-
   using namespace lam::cbn;
 
   constexpr big_int<2> p = {{181UL, 13835058055282163712UL}};
@@ -72,7 +69,6 @@ TEST_CASE("For any prime p, assert that p + 0 = 0 mod p")
 
 TEST_CASE("Multiplication")
 {
-
   using namespace lam::cbn;
   SECTION("")
   {
@@ -138,7 +134,6 @@ TEST_CASE("Squaring") {
 
 TEST_CASE("String Initialization")
 {
-
   using namespace lam::cbn;
 
   constexpr auto num = to_big_int(6513020836420374401749667047018991798096360820_Z);
@@ -165,7 +160,6 @@ TEST_CASE("String Initialization other base type") {
 
 TEST_CASE("String output")
 {
-
   using namespace lam::cbn;
   constexpr auto num = to_big_int(85070591730234618820156358408775751693_Z);
 
@@ -177,7 +171,6 @@ TEST_CASE("String output")
 
 TEST_CASE("Barrett reduction")
 {
-
   using namespace lam::cbn;
 
   constexpr auto prime = to_big_int(1606938044258990275541962092341162602522202993782792835301611_Z);
@@ -283,7 +276,6 @@ TEST_CASE("Division where divisor is larger than dividend")
 
 TEST_CASE("short div")
 {
-
   using namespace lam::cbn;
 
   constexpr auto a = to_big_int(12103081107736073677280037_Z);
@@ -303,7 +295,6 @@ TEST_CASE("short div")
 
 TEST_CASE("gcd")
 {
-
   using namespace lam::cbn;
 
   static constexpr auto a = 1210308110773251360736775280037_Z;

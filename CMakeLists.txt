@@ -50,7 +50,6 @@ set(LAM_CTBIGNUM_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/include/")
 ## create target and add module sources
 ##
 add_library(${LAM_CTBIGNUM_TARGET_NAME} STATIC)
-
 target_sources(${LAM_CTBIGNUM_TARGET_NAME}
     PUBLIC
     FILE_SET CXX_MODULES
@@ -78,8 +77,8 @@ target_sources(${LAM_CTBIGNUM_TARGET_NAME}
         include/ctbignum/io.cppm
         include/ctbignum/literals.cppm
         include/ctbignum/field.cppm
+        include/ctbignum/roots.cppm
 )
-
 add_library(lam::ctbignum ALIAS ${LAM_CTBIGNUM_TARGET_NAME})
 set_target_properties(ctbignum PROPERTIES OUTPUT_NAME lam_ctbignum)
 

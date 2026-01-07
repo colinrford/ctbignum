@@ -15,7 +15,6 @@ import lam.ctbignum;
 
 TEST_CASE("Test division invariant integer")
 {
-
   using namespace lam::cbn;
   using namespace lam::cbn::literals;
 

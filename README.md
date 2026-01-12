@@ -2,7 +2,7 @@
 ## Constexpr C++20 Big-Integer / Finite-Field library
 ## This is a fork of the original ctbignum library by Niek J. Bouman
 I have taken it and modularized it in the sense of c++20 Modules. I have also 
-absorbed it into [`lam::` namespace](https://github.com/colinrford/lam). Besides 
+absorbed it into [`lam::` namespace](https://www.github.com/colinrford/lam). Besides 
 - `formal_verification` -- see the `STATUS.md` file inside that folder
 - `libff` is currently not included in the benchmarks
 

@@ -31,7 +31,7 @@ set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 ## PROJECT
 ## name and version
 ##
-project(lam_ctbignum VERSION 0.7.1 LANGUAGES CXX)
+project(lam_ctbignum VERSION 0.7.260210 LANGUAGES CXX)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -46,7 +46,7 @@ option(LAM_CTBIGNUM_BuildBenchmarks "Build the benchmarks." OFF)
 ##
 ## CONFIGURATION
 ##
-set(LAM_CTBIGNUM_TARGET_NAME               ctbignum)
+set(LAM_CTBIGNUM_TARGET_NAME               lam_ctbignum)
 set(LAM_CTBIGNUM_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/include/")
 
 ##
@@ -84,7 +84,7 @@ target_sources(${LAM_CTBIGNUM_TARGET_NAME}
         include/ctbignum/roots.cppm
 )
 add_library(lam::ctbignum ALIAS ${LAM_CTBIGNUM_TARGET_NAME})
-set_target_properties(ctbignum PROPERTIES OUTPUT_NAME lam_ctbignum)
+set_target_properties(${LAM_CTBIGNUM_TARGET_NAME} PROPERTIES OUTPUT_NAME lam_ctbignum)
 
 ##
 ## TESTS

@@ -96,3 +96,6 @@ if(NTL_INCLUDE_DIR AND NTL_LIBRARY AND GMP_LIBRARY)
 else()
     message(STATUS "NTL or GMP not found. Skipping modinv tests.")
 endif()
+
+add_executable(check_kyber_prime src/test_kyber_prime.cpp)
+target_link_libraries(check_kyber_prime PRIVATE lam::ctbignum)

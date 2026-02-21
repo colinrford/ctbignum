@@ -31,11 +31,34 @@ set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 ## PROJECT
 ## name and version
 ##
-project(lam_ctbignum VERSION 0.7.260210 LANGUAGES CXX)
+project(lam_ctbignum VERSION 0.7.260220 LANGUAGES CXX)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+find_package(Git)
+if(GIT_FOUND)
+  execute_process(
+    COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+else()
+  set(GIT_HASH "unknown")
+endif()
+
+if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE MATCHES "^[Dd][Ee][Bb][Uu][Gg]$")
+  set(IS_DEBUG "true")
+else()
+  set(IS_DEBUG "false")
+endif()
+
+configure_file(
+  include/ctbignum/ctbignum_config.cppm.in
+  ${CMAKE_CURRENT_BINARY_DIR}/ctbignum_config.cppm
+)
 
 ##
 ## OPTIONS
@@ -58,10 +81,11 @@ target_sources(${LAM_CTBIGNUM_TARGET_NAME}
     PUBLIC
     FILE_SET CXX_MODULES
     TYPE CXX_MODULES
-    BASE_DIRS ${PROJECT_SOURCE_DIR}/include
+    BASE_DIRS ${PROJECT_SOURCE_DIR}/include ${CMAKE_CURRENT_BINARY_DIR}
     FILES
         # Primary module interface
         include/ctbignum/ctbignum.cppm
+        ${CMAKE_CURRENT_BINARY_DIR}/ctbignum_config.cppm
         # Module partitions (in dependency order)
         include/ctbignum/bigint.cppm
         include/ctbignum/slicing.cppm

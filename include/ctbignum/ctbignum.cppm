@@ -11,6 +11,9 @@
 
 export module lam.ctbignum;
 
+// Build configuration
+export import :config;
+
 // Core types
 export import :bigint;
 

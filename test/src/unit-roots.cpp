@@ -181,14 +181,15 @@ TEST_CASE("Modular square root - Tonelli-Shanks")
 }
 
 // Helper for fuzzing
-template <typename T>
+template<typename T>
 class Randomizer
 {
 public:
-  template <size_t N>
-  void operator()(lam::cbn::big_int<N, T> &a)
+  template<size_t N>
+  void operator()(lam::cbn::big_int<N, T>& a)
   {
-    for (auto &limb : a) limb = distribution(generator);
+    for (auto& limb : a)
+      limb = distribution(generator);
   }
 
 private:
@@ -234,7 +235,10 @@ TEST_CASE("Stress Tests and Edge Cases")
     for (int i = 0; i < 50; ++i)
     {
       // Generate random valid field element
-      do { randomizer(rand_data); } while (rand_data >= p_val); // Ensure < p
+      do
+      {
+        randomizer(rand_data);
+      } while (rand_data >= p_val); // Ensure < p
 
       GF r{rand_data};
 
@@ -271,7 +275,10 @@ TEST_CASE("Stress Tests and Edge Cases")
     for (int i = 0; i < 50; ++i)
     {
       // 1. Generate valid random r
-      do { randomizer(rand_data); } while (rand_data >= p_val);
+      do
+      {
+        randomizer(rand_data);
+      } while (rand_data >= p_val);
       GF r{rand_data};
 
       // 2. Compute cubic residue x = r^3
@@ -284,7 +291,10 @@ TEST_CASE("Stress Tests and Edge Cases")
       auto cubed = val * val * val;
       REQUIRE(cubed.data == x.data);
       // 4. Test random element (likely non-residue)
-      do { randomizer(rand_data); } while (rand_data >= p_val);
+      do
+      {
+        randomizer(rand_data);
+      } while (rand_data >= p_val);
       GF z{rand_data};
 
       auto z_root = cbrt(z);
@@ -515,7 +525,7 @@ TEST_CASE("Comprehensive Primes Matrix (Sqrt + Cbrt)", "[roots]")
     auto r_cbrt = cbrt(eight);
     REQUIRE(r_cbrt.has_value());
     bool is_valid_cbrt =
-        (r_cbrt->data == to_big_int(2_Z) || r_cbrt->data == to_big_int(5_Z) || r_cbrt->data == to_big_int(6_Z));
+      (r_cbrt->data == to_big_int(2_Z) || r_cbrt->data == to_big_int(5_Z) || r_cbrt->data == to_big_int(6_Z));
     REQUIRE(is_valid_cbrt);
 
     // Compile-Time

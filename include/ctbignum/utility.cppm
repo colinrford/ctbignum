@@ -20,8 +20,7 @@ namespace lam::cbn
 namespace detail
 {
 
-export 
-template <std::size_t N, typename T> 
+export template<std::size_t N, typename T>
 constexpr auto tight_length(big_int<N, T> num)
 {
   // count the effective number of limbs
@@ -33,8 +32,7 @@ constexpr auto tight_length(big_int<N, T> num)
   return L;
 }
 
-export 
-template <typename T, T... Is> 
+export template<typename T, T... Is>
 constexpr auto tight_length(std::integer_sequence<T, Is...>)
 
 {
@@ -49,8 +47,7 @@ constexpr auto tight_length(std::integer_sequence<T, Is...>)
   return L;
 }
 
-export 
-template <std::size_t N, typename T> 
+export template<std::size_t N, typename T>
 constexpr auto bit_length(big_int<N, T> num)
 {
   // we define bit_length(0) := 1
@@ -67,9 +64,8 @@ constexpr auto bit_length(big_int<N, T> num)
   return bitlen;
 }
 
-export 
-template <std::size_t N1, std::size_t N2, typename T>
-constexpr void assign(big_int<N1, T> &dst, big_int<N2, T> src)
+export template<std::size_t N1, std::size_t N2, typename T>
+constexpr void assign(big_int<N1, T>& dst, big_int<N2, T> src)
 {
   // assignment for the scenario where N1 >= N2
 
@@ -83,8 +79,7 @@ constexpr void assign(big_int<N1, T> &dst, big_int<N2, T> src)
 
 } // namespace detail
 
-export 
-template <std::size_t ExplicitLength = 0, typename T, T... Limbs>
+export template<std::size_t ExplicitLength = 0, typename T, T... Limbs>
 constexpr auto to_big_int(std::integer_sequence<T, Limbs...>)
 { return big_int<ExplicitLength ? ExplicitLength : sizeof...(Limbs), T>{Limbs...}; }
 

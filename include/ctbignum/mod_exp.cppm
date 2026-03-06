@@ -23,8 +23,7 @@ namespace lam::cbn
 {
 
 // modular exponentiation using Montgomery multiplication
-export 
-template <std::size_t N1, std::size_t N2, typename T, T... Modulus>
+export template<std::size_t N1, std::size_t N2, typename T, T... Modulus>
 constexpr auto mod_exp(big_int<N1, T> a, big_int<N2, T> exp, std::integer_sequence<T, Modulus...> modulus)
 {
   constexpr auto N = modulus.size();
@@ -58,8 +57,7 @@ constexpr auto mod_exp(big_int<N1, T> a, big_int<N2, T> exp, std::integer_sequen
 }
 
 // modular exponentiation using Montgomery multiplication with runtime modulus
-export 
-template <std::size_t N1, std::size_t N2, std::size_t N, typename T>
+export template<std::size_t N1, std::size_t N2, std::size_t N, typename T>
 constexpr auto mod_exp(big_int<N1, T> a, big_int<N2, T> exp, big_int<N, T> m)
 {
   auto R_mod_m = div(detail::unary_encoding<N, N + 1, T>(), m).remainder;

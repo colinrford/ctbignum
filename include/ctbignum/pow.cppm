@@ -16,8 +16,7 @@ import std;
 namespace lam::cbn
 {
 
-export 
-template <std::size_t N1, typename T> 
+export template<std::size_t N1, typename T>
 constexpr auto pow(big_int<N1, T> base, T exp)
 {
   big_int<N1, T> result{1};

@@ -12,7 +12,6 @@
 #include <NTL/ZZ.h>
 #include <NTL/ZZ_p.h>
 #include <benchmark/benchmark.h>
-#include <random>
 
 import std;
 import lam.ctbignum;
@@ -21,7 +20,7 @@ import lam.ctbignum;
 
 using namespace lam::cbn::literals;
 
-static void modadd(benchmark::State &state)
+static void modadd(benchmark::State& state)
 {
   using namespace lam::cbn;
   constexpr auto prime = to_big_int(1606938044258990275541962092341162602522202993782792835301611_Z);
@@ -44,7 +43,7 @@ static void modadd(benchmark::State &state)
   }
 }
 
-static void modadd_ntl(benchmark::State &state)
+static void modadd_ntl(benchmark::State& state)
 {
   using NTL::conv;
   using NTL::ZZ;
@@ -64,7 +63,7 @@ static void modadd_ntl(benchmark::State &state)
   }
 }
 
-static void modmul(benchmark::State &state)
+static void modmul(benchmark::State& state)
 {
   using namespace lam::cbn;
   constexpr auto prime = 1606938044258990275541962092341162602522202993782792835301611_Z;
@@ -95,7 +94,7 @@ static void modmul(benchmark::State &state)
 class MyFixture : public ::benchmark::Fixture
 {
 public:
-  void SetUp(const ::benchmark::State &state)
+  void SetUp(const ::benchmark::State& state)
   {
 
     std::default_random_engine generator;
@@ -107,14 +106,14 @@ public:
       limb = distribution(generator);
   }
 
-  void TearDown(const ::benchmark::State &state) { data.clear(); }
+  void TearDown(const ::benchmark::State& state) { data.clear(); }
 
   ~MyFixture() {}
 
   std::vector<uint64_t> data;
 };
 
-BENCHMARK_F(MyFixture, fixture_mul)(benchmark::State &st)
+BENCHMARK_F(MyFixture, fixture_mul)(benchmark::State& st)
 {
 
   using namespace lam::cbn;
@@ -127,8 +126,8 @@ BENCHMARK_F(MyFixture, fixture_mul)(benchmark::State &st)
   for (auto _ : st)
   {
 
-    auto x = reinterpret_cast<big_int<4> *>(base_ptr + i);
-    auto y = reinterpret_cast<big_int<4> *>(base_ptr + i + 4);
+    auto x = reinterpret_cast<big_int<4>*>(base_ptr + i);
+    auto y = reinterpret_cast<big_int<4>*>(base_ptr + i + 4);
 
     auto j = lam::cbn::mul(*x, *y);
     // auto k = lam::cbn::barrett_reduction(j, prime);
@@ -166,7 +165,7 @@ static void modmul2(benchmark::State &state) {
 }
 */
 
-static void modexp_ntl(benchmark::State &state)
+static void modexp_ntl(benchmark::State& state)
 {
   using NTL::conv;
   using NTL::ZZ;
@@ -215,7 +214,7 @@ static void modexp(benchmark::State &state) {
   }
 }*/
 
-static void modexp_mont(benchmark::State &state)
+static void modexp_mont(benchmark::State& state)
 {
 
   using namespace lam::cbn;
@@ -236,7 +235,7 @@ static void modexp_mont(benchmark::State &state)
   }
 }
 
-static void modmul_ntl(benchmark::State &state)
+static void modmul_ntl(benchmark::State& state)
 {
   using NTL::conv;
   using NTL::ZZ;
@@ -291,7 +290,7 @@ static void reduce(benchmark::State &state) {
 }
 */
 
-static void reduce_intseq(benchmark::State &state)
+static void reduce_intseq(benchmark::State& state)
 {
   using namespace lam::cbn;
 
@@ -318,7 +317,7 @@ static void reduce_intseq(benchmark::State &state)
   }
 }
 
-static void reduce_ntl(benchmark::State &state)
+static void reduce_ntl(benchmark::State& state)
 {
   using NTL::conv;
   using NTL::ZZ;
@@ -335,7 +334,7 @@ static void reduce_ntl(benchmark::State &state)
   }
 }
 
-static void big_int_from_string_ntl(benchmark::State &state)
+static void big_int_from_string_ntl(benchmark::State& state)
 {
   using NTL::ZZ;
   using NTL::ZZ_p;
@@ -347,7 +346,7 @@ static void big_int_from_string_ntl(benchmark::State &state)
     benchmark::DoNotOptimize(x);
   }
 }
-static void big_int_from_string(benchmark::State &state)
+static void big_int_from_string(benchmark::State& state)
 {
   using namespace lam::cbn;
   using NTL::conv;
@@ -361,7 +360,7 @@ static void big_int_from_string(benchmark::State &state)
   }
 }
 
-static void modadd_immediate(benchmark::State &state)
+static void modadd_immediate(benchmark::State& state)
 {
   using namespace lam::cbn;
   constexpr auto prime = to_big_int(1606938044258990275541962092341162602522202993782792835301611_Z);
@@ -386,7 +385,7 @@ static void modadd_immediate(benchmark::State &state)
   }
 }
 
-static void modadd_immediate_ntl(benchmark::State &state)
+static void modadd_immediate_ntl(benchmark::State& state)
 {
 
   using NTL::conv;
@@ -433,7 +432,7 @@ static void modadd_immediate_ntl(benchmark::State &state)
   }
 }
 
-static void mul_immediate(benchmark::State &state)
+static void mul_immediate(benchmark::State& state)
 {
   using namespace lam::cbn;
 
@@ -495,7 +494,7 @@ static void mul2_immediate(benchmark::State &state) {
 }
 */
 
-static void mul_immediate_ntl(benchmark::State &state)
+static void mul_immediate_ntl(benchmark::State& state)
 {
 
   using NTL::conv;
@@ -511,7 +510,7 @@ static void mul_immediate_ntl(benchmark::State &state)
   ZZ x = conv<ZZ>(modulus - 1);
   ZZ z;
 
-  auto p = reinterpret_cast<uint64_t *>(x.rep.rep);
+  auto p = reinterpret_cast<uint64_t*>(x.rep.rep);
   for (int i = 0; i < 4; ++i)
   {
     p[2 + i] = distribution(generator);
@@ -533,7 +532,7 @@ static void mul_immediate_ntl(benchmark::State &state)
   }
 }
 
-static void mymul_routine(benchmark::State &state)
+static void mymul_routine(benchmark::State& state)
 {
 
   using namespace lam::cbn;
@@ -646,7 +645,7 @@ static void mul2_(benchmark::State &state) {
 
 */
 
-static void mulmul(benchmark::State &state)
+static void mulmul(benchmark::State& state)
 {
 
   using namespace lam::cbn;
@@ -687,7 +686,7 @@ static void square(benchmark::State &state) {
 }
 */
 
-static void mul_ntl(benchmark::State &state)
+static void mul_ntl(benchmark::State& state)
 {
 
   using NTL::conv;
@@ -705,7 +704,7 @@ static void mul_ntl(benchmark::State &state)
   }
 }
 
-static void montmul(benchmark::State &state)
+static void montmul(benchmark::State& state)
 {
 
   using namespace lam::cbn;
@@ -730,7 +729,7 @@ static void montmul(benchmark::State &state)
   }
 }
 
-static void montmul_auto(benchmark::State &state)
+static void montmul_auto(benchmark::State& state)
 {
 
   using namespace lam::cbn;
@@ -872,7 +871,7 @@ static void mont_reduction2(benchmark::State &state) {
 }
 */
 
-static void mont_reduction_auto(benchmark::State &state)
+static void mont_reduction_auto(benchmark::State& state)
 {
 
   using namespace lam::cbn;

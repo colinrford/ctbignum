@@ -20,4 +20,11 @@ export namespace lam::ctbignum::config
 
   // Debug Status
   inline constexpr bool is_debug = @IS_DEBUG@;
+
+  // 128-bit integer support
+  inline constexpr bool has_int128 = @CBN_HAS_INT128_BOOL@;
+
+  // Type alias resolved at configure time: unsigned __int128 when available,
+  // void otherwise. Avoids __uint128_t in module source which MSVC rejects.
+  @CBN_UINT128_TYPE_ALIAS@
 }

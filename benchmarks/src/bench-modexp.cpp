@@ -12,14 +12,13 @@
 #include <NTL/ZZ.h>
 #include <NTL/ZZ_p.h>
 #include <benchmark/benchmark.h>
-#include <random>
 
 import std;
 import lam.ctbignum;
 
 using namespace lam::cbn::literals;
 
-static void modexp_ntl(benchmark::State &state)
+static void modexp_ntl(benchmark::State& state)
 {
   using NTL::ZZ;
   using NTL::ZZ_p;
@@ -45,7 +44,8 @@ static void modexp_ntl(benchmark::State &state)
   }
 }
 
-template <size_t Len> static void modexp_cbn(benchmark::State &state)
+template<size_t Len>
+static void modexp_cbn(benchmark::State& state)
 {
 
   using namespace lam::cbn;
@@ -55,7 +55,7 @@ template <size_t Len> static void modexp_cbn(benchmark::State &state)
   std::vector<uint64_t> data(total_sz);
   std::default_random_engine generator;
   std::uniform_int_distribution<uint64_t> distribution(0);
-  for (auto &limb : data)
+  for (auto& limb : data)
     limb = distribution(generator);
 
   size_t i = 0;
@@ -64,8 +64,8 @@ template <size_t Len> static void modexp_cbn(benchmark::State &state)
   for (auto _ : state)
   {
 
-    auto x = reinterpret_cast<big_int<Len> *>(base_ptr + i);
-    auto y = reinterpret_cast<big_int<Len> *>(base_ptr + i + Len);
+    auto x = reinterpret_cast<big_int<Len>*>(base_ptr + i);
+    auto y = reinterpret_cast<big_int<Len>*>(base_ptr + i + Len);
     auto j = lam::cbn::mod_exp(*x, *y, 14474011154664524427946373126085988481658748083205070504932198000989141205031_Z);
     benchmark::DoNotOptimize(j);
 

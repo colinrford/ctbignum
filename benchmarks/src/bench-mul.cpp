@@ -12,15 +12,14 @@
 #include <NTL/ZZ.h>
 #include <NTL/ZZ_p.h>
 #include <benchmark/benchmark.h>
-#include <gmp.h>
-#include <random>
 
 import std;
 import lam.ctbignum;
 
 using namespace lam::cbn;
 
-template <size_t Len> static void mul_gmp(benchmark::State &state)
+template<size_t Len>
+static void mul_gmp(benchmark::State& state)
 {
 
   size_t total_sz = 2 * Len * 1000;
@@ -28,11 +27,11 @@ template <size_t Len> static void mul_gmp(benchmark::State &state)
   std::vector<uint64_t> data(total_sz);
   std::default_random_engine generator;
   std::uniform_int_distribution<uint64_t> distribution(0);
-  for (auto &limb : data)
+  for (auto& limb : data)
     limb = distribution(generator);
 
   size_t i = 0;
-  auto base_ptr = reinterpret_cast<mp_limb_t *>(data.data());
+  auto base_ptr = reinterpret_cast<mp_limb_t*>(data.data());
 
   mp_limb_t result[2 * Len];
 
@@ -48,7 +47,8 @@ template <size_t Len> static void mul_gmp(benchmark::State &state)
   }
 }
 
-template <size_t Len> static void mul_cbn(benchmark::State &state)
+template<size_t Len>
+static void mul_cbn(benchmark::State& state)
 {
 
   size_t total_sz = 2 * Len * 1000;
@@ -56,7 +56,7 @@ template <size_t Len> static void mul_cbn(benchmark::State &state)
   std::vector<uint64_t> data(total_sz);
   std::default_random_engine generator;
   std::uniform_int_distribution<uint64_t> distribution(0);
-  for (auto &limb : data)
+  for (auto& limb : data)
     limb = distribution(generator);
 
   size_t i = 0;
@@ -65,8 +65,8 @@ template <size_t Len> static void mul_cbn(benchmark::State &state)
   for (auto _ : state)
   {
 
-    auto x = reinterpret_cast<big_int<Len> *>(base_ptr + i);
-    auto y = reinterpret_cast<big_int<Len> *>(base_ptr + i + Len);
+    auto x = reinterpret_cast<big_int<Len>*>(base_ptr + i);
+    auto y = reinterpret_cast<big_int<Len>*>(base_ptr + i + Len);
     auto j = mul(*x, *y);
     benchmark::DoNotOptimize(j);
 
@@ -76,7 +76,8 @@ template <size_t Len> static void mul_cbn(benchmark::State &state)
   }
 }
 
-template <size_t Len> static void mul_ntl(benchmark::State &state)
+template<size_t Len>
+static void mul_ntl(benchmark::State& state)
 {
 
   using NTL::conv;

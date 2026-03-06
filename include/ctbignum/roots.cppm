@@ -26,7 +26,7 @@ namespace detail
 {
 
 // Factor p - 1 = Q * 2^S where Q is odd
-template <std::size_t N, typename T> 
+template<std::size_t N, typename T>
 constexpr auto factor_out_twos(big_int<N, T> n)
 {
   std::size_t S = 0;
@@ -39,7 +39,7 @@ constexpr auto factor_out_twos(big_int<N, T> n)
 }
 
 // Factor n = d * val^S
-template <std::size_t N, typename T> 
+template<std::size_t N, typename T>
 constexpr auto factor_out_val(big_int<N, T> n, T val)
 {
   std::size_t S = 0;
@@ -62,7 +62,7 @@ constexpr auto factor_out_val(big_int<N, T> n, T val)
 
 // Miller-Rabin primality test
 // Returns true if n is (likely) prime, false if composite
-template <typename T, T... Modulus> 
+template<typename T, T... Modulus>
 constexpr bool is_prime(std::integer_sequence<T, Modulus...>)
 {
   constexpr std::size_t N = sizeof...(Modulus);
@@ -118,8 +118,7 @@ constexpr bool is_prime(std::integer_sequence<T, Modulus...>)
 
 // Check if n is a quadratic residue mod p using Euler's criterion
 // n^((p - 1) / 2) ≡ 1 (mod p) iff n is a quadratic residue
-export 
-template <typename T, T... Modulus> 
+export template<typename T, T... Modulus>
 constexpr bool is_quadratic_residue(ZqElement<T, Modulus...> n)
 {
   constexpr auto p = big_int<sizeof...(Modulus), T>{Modulus...};
@@ -136,8 +135,7 @@ constexpr bool is_quadratic_residue(ZqElement<T, Modulus...> n)
 
 // Tonelli-Shanks algorithm for computing modular square roots
 // Returns std::optional<ZqElement> - nullopt if n is not a quadratic residue
-export 
-template <typename T, T... Modulus>
+export template<typename T, T... Modulus>
 constexpr auto sqrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Modulus...>>
 {
   constexpr std::size_t N = sizeof...(Modulus);
@@ -172,7 +170,8 @@ constexpr auto sqrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
     constexpr auto neg_one = subtract_ignore_carry(p, one);
     constexpr auto legendre_exp = shift_right(p_minus_1, 1);
     big_int<N, T> z{2};
-    while (mod_exp(z, legendre_exp, std::integer_sequence<T, Modulus...>{}) != neg_one) z = add_ignore_carry(z, one);
+    while (mod_exp(z, legendre_exp, std::integer_sequence<T, Modulus...>{}) != neg_one)
+      z = add_ignore_carry(z, one);
     // Initialize
     std::size_t M = S;
     auto c = mod_exp(z, Q, std::integer_sequence<T, Modulus...>{});
@@ -206,8 +205,7 @@ constexpr auto sqrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
 // Cube root in finite field
 // Uses the formula: cbrt(a) = a^((2 * (p - 1)) / 3) when p ≡ 2 (mod 3)
 // Returns nullopt if n is not a cubic residue (when p ≡ 1 mod 3)
-export 
-template <typename T, T... Modulus>
+export template<typename T, T... Modulus>
 constexpr auto cbrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Modulus...>>
 {
   constexpr std::size_t N = sizeof...(Modulus);
@@ -265,7 +263,8 @@ constexpr auto cbrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
       // Truncate to N limbs (we know it fits since 1+2t < p)
       constexpr auto N_limbs = sizeof...(Modulus);
       big_int<N_limbs, T> two_t;
-      for (std::size_t i = 0; i < N_limbs; ++i) two_t[i] = two_t_full[i];
+      for (std::size_t i = 0; i < N_limbs; ++i)
+        two_t[i] = two_t_full[i];
 
       auto num = add_ignore_carry(one, two_t);
       k = div(num, three).quotient;
@@ -330,7 +329,8 @@ constexpr auto cbrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
 
       // Update g = g^(3^(r-m-1))
       auto g2 = g;
-      for (std::size_t j = 0; j < r_val - m - 1; ++j) g2 = mod_exp(g2, three, std::integer_sequence<T, Modulus...>{});
+      for (std::size_t j = 0; j < r_val - m - 1; ++j)
+        g2 = mod_exp(g2, three, std::integer_sequence<T, Modulus...>{});
 
       g = g2; // New g
 

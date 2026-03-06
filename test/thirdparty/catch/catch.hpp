@@ -919,6 +919,7 @@ constexpr auto operator "" _catch_sr( char const* rawChars, std::size_t size ) n
 
 
 #include <type_traits>
+#include <new>
 
 namespace Catch {
     template<typename T>

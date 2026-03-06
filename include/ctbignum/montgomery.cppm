@@ -33,8 +33,7 @@ namespace lam::cbn
 // output:
 //  T R^-1 mod m,       where R = (2^64)^n
 //
-export 
-template <typename T, std::size_t N1, T... Modulus, std::size_t N2 = sizeof...(Modulus)>
+export template<typename T, std::size_t N1, T... Modulus, std::size_t N2 = sizeof...(Modulus)>
 constexpr auto montgomery_reduction(big_int<N1, T> A, std::integer_sequence<T, Modulus...>)
 {
   using detail::first;
@@ -66,8 +65,7 @@ constexpr auto montgomery_reduction(big_int<N1, T> A, std::integer_sequence<T, M
 }
 
 // Montgomery multiplication with compile-time modulus
-export 
-template <typename T, std::size_t N, T... Modulus>
+export template<typename T, std::size_t N, T... Modulus>
 constexpr auto montgomery_mul(big_int<N, T> x, big_int<N, T> y, std::integer_sequence<T, Modulus...>)
 {
   using detail::first;
@@ -118,11 +116,13 @@ constexpr auto montgomery_mul(big_int<N, T> x, big_int<N, T> y, std::integer_seq
 namespace detail
 {
 // Define a template that can be used to prevent type deduction of a parameter.
-template <typename T> struct Identity
+template<typename T>
+struct Identity
 {
   typedef T type;
 };
-template <typename T> using Identity_t = typename Identity<T>::type;
+template<typename T>
+using Identity_t = typename Identity<T>::type;
 } // namespace detail
 
 // Runtime-parameter variants
@@ -139,8 +139,7 @@ template <typename T> using Identity_t = typename Identity<T>::type;
 // output:
 //  T R^-1 mod m,       where R = (2^64)^n
 //
-export 
-template <typename T, std::size_t N1, std::size_t N2>
+export template<typename T, std::size_t N1, std::size_t N2>
 constexpr auto montgomery_reduction(big_int<N1, T> A, big_int<N2, T> m, detail::Identity_t<T> mprime)
 {
   using detail::first;
@@ -170,8 +169,7 @@ constexpr auto montgomery_reduction(big_int<N1, T> A, big_int<N2, T> m, detail::
 /// Note: the type of the last parameter is not deduced from itself, but from
 /// the other parameters instead.
 // Montgomery multiplication with runtime parameters
-export 
-template <typename T, std::size_t N>
+export template<typename T, std::size_t N>
 constexpr auto montgomery_mul(big_int<N, T> x, big_int<N, T> y, big_int<N, T> m, detail::Identity_t<T> mprime)
 {
   using detail::first;
@@ -217,8 +215,7 @@ constexpr auto montgomery_mul(big_int<N, T> x, big_int<N, T> y, big_int<N, T> m,
 namespace detail
 {
 // inverse modulo 2^(limb-width) (needed for the montgomery representation)
-export 
-template <typename T>
+export template<typename T>
 constexpr T inverse_mod(T a)
 {
   T x = ((a << 1 ^ a) & 4) << 1 ^ a;

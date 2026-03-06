@@ -20,35 +20,32 @@ namespace lam::cbn
 namespace detail
 {
 
-export 
-template <typename T = std::uint64_t, T... Limbs, std::size_t... Is>
+export template<typename T = std::uint64_t, T... Limbs, std::size_t... Is>
 constexpr auto take_first(std::integer_sequence<T, Limbs...>, std::index_sequence<Is...>)
 {
   constexpr big_int<sizeof...(Limbs), T> num = {Limbs...};
   return std::integer_sequence<T, num[Is]...>{};
 }
 
-export 
-template <std::size_t Begin, std::size_t End, std::size_t Padding = 0, typename T, std::size_t N1>
+export template<std::size_t Begin, std::size_t End, std::size_t Padding = 0, typename T, std::size_t N1>
 constexpr auto take(big_int<N1, T> t)
 {
   // static_assert(End >= Begin, "invalid range");
   // static_assert(End - Begin <= N1, "invalid range");
 
   big_int<End - Begin + Padding, T> res{};
-  for (auto i = Begin; i < End; ++i) 
+  for (auto i = Begin; i < End; ++i)
     res[i - Begin] = t[i];
 
   return res;
 }
 
-export 
-template <std::size_t ResultLength, typename T, std::size_t N1>
+export template<std::size_t ResultLength, typename T, std::size_t N1>
 constexpr auto take(big_int<N1, T> t, const std::size_t Begin, const std::size_t End, const std::size_t Offset = 0)
 {
 
   big_int<ResultLength, T> res{};
-  for (auto i = Begin; i < End; ++i) 
+  for (auto i = Begin; i < End; ++i)
     res[i - Begin + Offset] = t[i];
 
   return res;
@@ -56,65 +53,58 @@ constexpr auto take(big_int<N1, T> t, const std::size_t Begin, const std::size_t
 
 // skip first N limbs
 // skip<N>(x) corresponds with right-shifting x by N limbs
-export 
-template <std::size_t N, std::size_t Padding = 0, typename T, std::size_t N1>
+export template<std::size_t N, std::size_t Padding = 0, typename T, std::size_t N1>
 constexpr auto skip(big_int<N1, T> t)
 { return take<N, N1, Padding>(t); }
 
 // skip first N limbs, runtime version
 // skip<N>(x) corresponds with right-shifting x by N limbs
-export 
-template <typename T, std::size_t N1> 
+export template<typename T, std::size_t N1>
 constexpr auto skip(big_int<N1, T> t, std::size_t N)
 { return take<N1>(t, N, N1); }
 
 // take first N limbs
 // first<N>(x) corresponds with x modulo (2^64)^N
-export 
-template <std::size_t N, typename T, std::size_t N1> 
+export template<std::size_t N, typename T, std::size_t N1>
 constexpr auto first(big_int<N1, T> t)
 { return take<0, N>(t); }
 
 // take first N limbs, runtime version
 // first(x,N) corresponds with x modulo (2^64)^N
-export 
-template <typename T, std::size_t N1> 
+export template<typename T, std::size_t N1>
 constexpr auto first(big_int<N1, T> t, std::size_t N)
 { return take<N1>(t, 0, N); }
 
 // add N extra limbs (at msb side)
-export 
-template <std::size_t N, typename T, std::size_t N1> 
+export template<std::size_t N, typename T, std::size_t N1>
 constexpr auto pad(big_int<N1, T> t)
 { return take<0, N1, N>(t); }
 
-export 
-template <std::size_t N, typename T, std::size_t N1> 
+export template<std::size_t N, typename T, std::size_t N1>
 constexpr auto to_length(big_int<N1, T> t)
 { return (N1 < N) ? pad<N - N1>(t) : first<N>(t); }
 
-export 
-template <typename T, std::size_t N1, std::size_t N2> 
+export template<typename T, std::size_t N1, std::size_t N2>
 constexpr auto join(big_int<N1, T> a, big_int<N2, T> b)
 {
   big_int<N1 + N2, T> result{};
 
-  for (std::size_t i = 0; i < N1; ++i) 
+  for (std::size_t i = 0; i < N1; ++i)
     result[i] = a[i];
 
-  for (std::size_t i = 0; i < N2; ++i) 
+  for (std::size_t i = 0; i < N2; ++i)
     result[N1 + i] = b[i];
 
   return result;
 }
 
 // shift left by k limbs (and produce output of limb-length ResultLength)
-export template <std::size_t ResultLength, typename T, std::size_t N1>
+export template<std::size_t ResultLength, typename T, std::size_t N1>
 constexpr auto limbwise_shift_left(big_int<N1, T> t, const std::size_t k)
 { return take<ResultLength>(t, 0, N1, k); }
 
 // N limbs, Kth limb set to one
-export template <std::size_t K, std::size_t N, typename T = std::uint64_t> 
+export template<std::size_t K, std::size_t N, typename T = std::uint64_t>
 constexpr auto unary_encoding()
 {
   big_int<N, T> res{};
@@ -122,7 +112,7 @@ constexpr auto unary_encoding()
   return res;
 }
 
-export template <std::size_t N, typename T = std::uint64_t> 
+export template<std::size_t N, typename T = std::uint64_t>
 constexpr auto unary_encoding(std::size_t K)
 {
   big_int<N, T> res{};
@@ -131,7 +121,7 @@ constexpr auto unary_encoding(std::size_t K)
 }
 
 // N limbs, Kth limb set to value
-export template <std::size_t N, typename T = std::uint64_t> 
+export template<std::size_t N, typename T = std::uint64_t>
 constexpr auto place_at(T value, std::size_t K)
 {
   big_int<N, T> res{};

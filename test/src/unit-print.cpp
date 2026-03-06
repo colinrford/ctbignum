@@ -6,7 +6,7 @@ import lam.ctbignum;
 TEST_CASE("std::format support for big_int", "[print]")
 {
   using namespace lam::cbn::literals;
-  using GF_Large = decltype(lam::cbn::Zq(1000000000_Z)); 
+  using GF_Large = decltype(lam::cbn::Zq(1000000000_Z));
   auto x = GF_Large(123456789_Z).data;
   // Test basic formatting
   auto s = std::format("{}", x);
@@ -31,8 +31,8 @@ TEST_CASE("std::format support for ZqElement", "[print]")
 
 TEST_CASE("std::print compilation check", "[print]")
 {
-    using namespace lam::cbn::literals;
-    using GF_Large = decltype(lam::cbn::Zq(1000000000_Z)); 
-    auto x = GF_Large(10_Z).data;
-    std::print("Testing printing: {}\n", x);
+  using namespace lam::cbn::literals;
+  using GF_Large = decltype(lam::cbn::Zq(1000000000_Z));
+  auto x = GF_Large(10_Z).data;
+  std::print("Testing printing: {}\n", x);
 }

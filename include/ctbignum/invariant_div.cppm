@@ -26,8 +26,7 @@ namespace lam::cbn
 namespace detail
 {
 
-export 
-template <std::size_t N, typename T = std::uint64_t, T... Divisor, std::size_t... Is>
+export template<std::size_t N, typename T = std::uint64_t, T... Divisor, std::size_t... Is>
 constexpr auto precompute_m_prime_nontight(std::integer_sequence<T, Divisor...>, std::index_sequence<Is...>)
 {
   constexpr auto D = sizeof...(Divisor);
@@ -43,8 +42,7 @@ constexpr auto precompute_m_prime_nontight(std::integer_sequence<T, Divisor...>,
   return std::integer_sequence<T, mp[Is]...>{};
 }
 
-export 
-template <std::size_t N, typename T = std::uint64_t, T... Divisor>
+export template<std::size_t N, typename T = std::uint64_t, T... Divisor>
 constexpr auto precompute_m_prime(std::integer_sequence<T, Divisor...>)
 {
   auto m = precompute_m_prime_nontight<N, T>(std::integer_sequence<T, Divisor...>{}, std::make_index_sequence<N>{});
@@ -62,8 +60,7 @@ constexpr auto precompute_m_prime(std::integer_sequence<T, Divisor...>)
 //  n           divident
 //  Divisor...  compile-time divisor
 //
-export 
-template <typename T, std::size_t N, T... Divisor>
+export template<typename T, std::size_t N, T... Divisor>
 constexpr auto quotient(big_int<N, T> n, std::integer_sequence<T, Divisor...>)
 {
   using detail::skip;
@@ -90,8 +87,7 @@ constexpr auto quotient(big_int<N, T> n, std::integer_sequence<T, Divisor...>)
 }
 
 // Constant-time modulo operation with a fixed modulus
-export 
-template <typename T, std::size_t N, T... Modulus>
+export template<typename T, std::size_t N, T... Modulus>
 constexpr auto mod(big_int<N, T> n, std::integer_sequence<T, Modulus...>)
 {
   auto d = quotient(n, std::integer_sequence<T, Modulus...>{});
@@ -99,8 +95,7 @@ constexpr auto mod(big_int<N, T> n, std::integer_sequence<T, Modulus...>)
   return detail::to_length<M>(subtract_ignore_carry(n, partial_mul<N>(big_int<M, T>{Modulus...}, d)));
 }
 
-export 
-template <typename T, std::size_t N, T... Modulus>
+export template<typename T, std::size_t N, T... Modulus>
 constexpr DivisionResult<big_int<N, T>, big_int<sizeof...(Modulus), T>> div(big_int<N, T> n,
                                                                             std::integer_sequence<T, Modulus...>)
 {

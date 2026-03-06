@@ -19,8 +19,7 @@ import :division;
 namespace lam::cbn
 {
 
-export 
-template <typename T> 
+export template<typename T>
 struct Radix10
 {
   using character_t = char;
@@ -28,11 +27,10 @@ struct Radix10
   static constexpr std::size_t representation_length_upper_bound(std::size_t bit_length_upper_bound)
   { return (25 * bit_length_upper_bound + 82) / 83; } // 25/83 =approx= log(2)/log(10)
   static character_t represent(T x) { return 48 + static_cast<character_t>(x); }
-  static constexpr const char *prefix = "";
+  static constexpr const char* prefix = "";
 };
 
-export 
-template <typename T> 
+export template<typename T>
 struct Radix16
 {
   using character_t = char;
@@ -46,14 +44,13 @@ struct Radix16
     else
       return 87 + static_cast<character_t>(x); // ascii: a..f
   }
-  static constexpr const char *prefix = "0x";
+  static constexpr const char* prefix = "0x";
 };
 
 // Return a representation of the big-integer in a user-specified radix
 //
 // this should be constant time (not verified yet)
-export 
-template <class Radix, std::size_t N, typename T> 
+export template<class Radix, std::size_t N, typename T>
 auto convert_radix(cbn::big_int<N, T> obj)
 {
   using namespace lam::cbn;
@@ -72,9 +69,8 @@ auto convert_radix(cbn::big_int<N, T> obj)
   return radix_repr;
 }
 
-export 
-template <std::size_t N, typename T> 
-std::ostream& operator<<(std::ostream &strm, cbn::big_int<N, T> num)
+export template<std::size_t N, typename T>
+std::ostream& operator<<(std::ostream& strm, cbn::big_int<N, T> num)
 {
   // Write a base-10 representation of the big-integer to the stream
   using Radix = Radix10<T>;
@@ -95,15 +91,15 @@ std::ostream& operator<<(std::ostream &strm, cbn::big_int<N, T> num)
 } // namespace lam::cbn
 
 // Standard formatter specialization for std::print compatibility
-export namespace std 
+export namespace std
 {
-template <std::size_t N, typename T>
-struct formatter<lam::cbn::big_int<N, T>> 
+template<std::size_t N, typename T>
+struct formatter<lam::cbn::big_int<N, T>>
 {
-  constexpr auto parse(format_parse_context& ctx) 
-  { return ctx.begin(); }
+  constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
 
-  auto format(const lam::cbn::big_int<N, T>& num, format_context& ctx) const {
+  auto format(const lam::cbn::big_int<N, T>& num, format_context& ctx) const
+  {
     // Reuse existing base-10 conversion logic
     using Radix = lam::cbn::Radix10<T>;
     auto buf = lam::cbn::convert_radix<Radix>(num);
@@ -111,7 +107,7 @@ struct formatter<lam::cbn::big_int<N, T>>
     // remove leading zeros
     int offset = 0;
     auto one_before_end = buf.cend() - 1;
-    for (auto it = buf.cbegin(); it != one_before_end; ++it) 
+    for (auto it = buf.cbegin(); it != one_before_end; ++it)
     {
       if (*it != Radix::represent(static_cast<T>(0)))
         break;
@@ -125,4 +121,4 @@ struct formatter<lam::cbn::big_int<N, T>>
     return it;
   }
 };
-}
+} // namespace std

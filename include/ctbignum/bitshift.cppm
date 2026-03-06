@@ -22,8 +22,7 @@ namespace lam::cbn
 
 // shift-right the big integer a by k bits
 // note that k must be strictly smaller than std::numeric_limits<T>::digits
-export 
-template <std::size_t N, typename T> 
+export template<std::size_t N, typename T>
 constexpr auto shift_right(big_int<N, T> a, std::size_t k)
 {
   big_int<N, T> res{};
@@ -40,8 +39,7 @@ constexpr auto shift_right(big_int<N, T> a, std::size_t k)
 // shift-left the big integer a by k bits
 // note that k must be strictly smaller than std::numeric_limits<T>::digits
 // answer has length of N+1 limbs
-export 
-template <std::size_t N, typename T> 
+export template<std::size_t N, typename T>
 constexpr auto shift_left(big_int<N, T> a, std::size_t k)
 {
   if (k == 0U)

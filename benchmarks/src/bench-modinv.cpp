@@ -10,16 +10,14 @@
 // file for details.
 
 #include <benchmark/benchmark.h>
-#include <cstring>
-#include <gmp.h>
-#include <random>
 
 import std;
 import lam.ctbignum;
 
 using namespace lam::cbn::literals;
 
-template <size_t N, typename T> void modinv_gmp(benchmark::State &state, lam::cbn::big_int<N, T> const &prime)
+template<size_t N, typename T>
+void modinv_gmp(benchmark::State& state, lam::cbn::big_int<N, T> const& prime)
 {
 
   constexpr size_t n = N;
@@ -33,10 +31,10 @@ template <size_t N, typename T> void modinv_gmp(benchmark::State &state, lam::cb
   std::vector<mp_limb_t> data(total_sz);
   std::default_random_engine generator;
   std::uniform_int_distribution<mp_limb_t> distribution(0);
-  for (auto &limb : data)
+  for (auto& limb : data)
     limb = distribution(generator);
 
-  mp_limb_t *base_ptr = data.data();
+  mp_limb_t* base_ptr = data.data();
 
   mp_limb_t dummy_quotient[n];
   for (size_t i = 0; i < 1000; ++i)
@@ -60,7 +58,8 @@ template <size_t N, typename T> void modinv_gmp(benchmark::State &state, lam::cb
   }
 }
 
-template <size_t N, typename T> void modinv_cbn(benchmark::State &state, lam::cbn::big_int<N, T> const &prime)
+template<size_t N, typename T>
+void modinv_cbn(benchmark::State& state, lam::cbn::big_int<N, T> const& prime)
 {
 
   constexpr size_t n = N;
@@ -72,10 +71,10 @@ template <size_t N, typename T> void modinv_cbn(benchmark::State &state, lam::cb
   std::vector<mp_limb_t> data(total_sz);
   std::default_random_engine generator;
   std::uniform_int_distribution<mp_limb_t> distribution(0);
-  for (auto &limb : data)
+  for (auto& limb : data)
     limb = distribution(generator);
 
-  mp_limb_t *base_ptr = data.data();
+  mp_limb_t* base_ptr = data.data();
 
   mp_limb_t dummy_quotient[n];
   for (size_t i = 0; i < 1000; ++i)
@@ -89,7 +88,7 @@ template <size_t N, typename T> void modinv_cbn(benchmark::State &state, lam::cb
   for (auto _ : state)
   {
 
-    auto result = lam::cbn::mod_inv(*reinterpret_cast<lam::cbn::big_int<N, T> *>(base_ptr + i), prime);
+    auto result = lam::cbn::mod_inv(*reinterpret_cast<lam::cbn::big_int<N, T>*>(base_ptr + i), prime);
     benchmark::DoNotOptimize(result);
 
     i += n;
@@ -101,10 +100,10 @@ template <size_t N, typename T> void modinv_cbn(benchmark::State &state, lam::cb
 // Registers a benchmark named "BM_takes_args/int_string_test" that passes
 // the specified values to `extra_args`.
 BENCHMARK_CAPTURE(
-    modinv_gmp, gmp_modular_inverse,
-    lam::cbn::to_big_int(115792089237316195423570985008687907853269984665640564039457584007908834671663_Z));
+  modinv_gmp, gmp_modular_inverse,
+  lam::cbn::to_big_int(115792089237316195423570985008687907853269984665640564039457584007908834671663_Z));
 BENCHMARK_CAPTURE(
-    modinv_cbn, cbn_modular_inverse,
-    lam::cbn::to_big_int(115792089237316195423570985008687907853269984665640564039457584007908834671663_Z));
+  modinv_cbn, cbn_modular_inverse,
+  lam::cbn::to_big_int(115792089237316195423570985008687907853269984665640564039457584007908834671663_Z));
 
 BENCHMARK_MAIN();

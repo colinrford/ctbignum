@@ -1,17 +1,18 @@
 #include "catch.hpp"
 #include <NTL/ZZ.h>
 #include <NTL/ZZ_limbs.h>
-#include <algorithm>
 
 import std;
 import lam.ctbignum;
 
-template <typename T> class Randomizer
+template<typename T>
+class Randomizer
 {
 public:
-  template <size_t N> void operator()(lam::cbn::big_int<N, T> &a)
+  template<size_t N>
+  void operator()(lam::cbn::big_int<N, T>& a)
   {
-    for (auto &limb : a)
+    for (auto& limb : a)
       limb = distribution(generator);
   }
 
@@ -51,9 +52,9 @@ TEST_CASE("New modinv test")
   using namespace lam::cbn::literals;
 
   constexpr auto p =
-      lam::cbn::to_big_int(115792089237316195423570985008687907853269984665640564039457584007908834671663_Z);
+    lam::cbn::to_big_int(115792089237316195423570985008687907853269984665640564039457584007908834671663_Z);
   constexpr auto a =
-      lam::cbn::to_big_int(65341020041517633956166170261014086368942546761318486551877808671514674964848_Z);
+    lam::cbn::to_big_int(65341020041517633956166170261014086368942546761318486551877808671514674964848_Z);
 
   static_assert(lam::cbn::mod_inv(a, p) ==
                 lam::cbn::to_big_int(83174505189910067536517124096019359197644205712500122884473429251812128958118_Z));

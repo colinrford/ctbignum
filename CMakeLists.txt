@@ -31,7 +31,7 @@ set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 ## PROJECT
 ## name and version
 ##
-project(lam_ctbignum VERSION 0.7.260220 LANGUAGES CXX)
+project(lam_ctbignum VERSION 0.7.260306 LANGUAGES CXX)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -53,6 +53,17 @@ if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE MATCHES "^[Dd][Ee][Bb][Uu][Gg]$")
   set(IS_DEBUG "true")
 else()
   set(IS_DEBUG "false")
+endif()
+
+if(MSVC)
+  # MSVC never has __int128. Avoid check_cxx_source_compiles here — it
+  # inherits CMAKE_CXX_MODULE_STD ON and fails in the TryCompile scratch dir.
+  set(CBN_HAS_INT128_BOOL "false")
+  set(CBN_UINT128_TYPE_ALIAS "using uint128_or_void = void;")
+else()
+  # __int128 is a well-known Clang/GCC extension, always available on these.
+  set(CBN_HAS_INT128_BOOL "true")
+  set(CBN_UINT128_TYPE_ALIAS "using uint128_or_void = unsigned __int128;")
 endif()
 
 configure_file(

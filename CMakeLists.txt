@@ -31,7 +31,7 @@ set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 ## PROJECT
 ## name and version
 ##
-project(lam_ctbignum VERSION 0.7.260306 LANGUAGES CXX)
+project(lam_ctbignum VERSION 0.7.260308 LANGUAGES CXX)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -115,6 +115,7 @@ target_sources(${LAM_CTBIGNUM_TARGET_NAME}
         include/ctbignum/mod_exp.cppm
         include/ctbignum/io.cppm
         include/ctbignum/literals.cppm
+        include/ctbignum/decimal_literals.cppm
         include/ctbignum/field.cppm
         include/ctbignum/roots.cppm
 )

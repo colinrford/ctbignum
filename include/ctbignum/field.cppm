@@ -20,6 +20,7 @@ import :addition;
 import :mult;
 import :invariant_div;
 import :mod_inv;
+import :decimal_literals;
 
 namespace lam::cbn
 {
@@ -36,6 +37,11 @@ struct ZqElement
   static constexpr ZqElement multiplicative_identity() { return ZqElement(1); }
   static constexpr ZqElement zero() { return additive_identity(); }
   static constexpr ZqElement one() { return multiplicative_identity(); }
+
+  static constexpr auto from_string(std::string_view s) -> ZqElement
+  {
+    return ZqElement{big_int_from_string<sizeof...(Modulus) + 1, T>(s)};
+  }
 
   big_int<sizeof...(Modulus), T> data;
   explicit operator auto() const { return data; } // allow casting to big_int

@@ -71,9 +71,9 @@ constexpr void assign(big_int<N1, T>& dst, big_int<N2, T> src)
 
   static_assert(N1 >= N2, "cannot assign: destination has smaller size than source");
 
-  for (std::size_t i = 0; i < N1; ++i)
+  for (std::size_t i = 0; i < N2; ++i)
     dst[i] = src[i];
-  for (auto i = N1; i < N2; ++i)
+  for (auto i = N2; i < N1; ++i)
     dst[i] = 0;
 }
 

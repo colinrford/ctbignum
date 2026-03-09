@@ -38,9 +38,12 @@ struct ZqElement
   static constexpr ZqElement zero() { return additive_identity(); }
   static constexpr ZqElement one() { return multiplicative_identity(); }
 
-  static constexpr auto from_string(std::string_view s) -> ZqElement
+  static constexpr auto from_string(std::string_view s) -> std::optional<ZqElement>
   {
-    return ZqElement{big_int_from_string<sizeof...(Modulus) + 1, T>(s)};
+    auto raw = big_int_from_string<sizeof...(Modulus) + 1, T>(s);
+    if (!raw)
+      return std::nullopt;
+    return ZqElement{*raw};
   }
 
   big_int<sizeof...(Modulus), T> data;

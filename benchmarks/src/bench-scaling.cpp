@@ -4,6 +4,7 @@
 
 #include <NTL/ZZ.h>
 #include <benchmark/benchmark.h>
+#include <gmp.h>
 
 import std;
 import lam.ctbignum;

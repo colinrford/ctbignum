@@ -33,35 +33,37 @@ foreach(file ${files})
     get_filename_component(file_basename ${file} NAME_WE)
     string(REGEX REPLACE "unit-([^$]+)" "test-\\1" testcase ${file_basename})
 
-    add_executable(${testcase} $<TARGET_OBJECTS:catch_main> ${file})
-    set_target_properties(${testcase} PROPERTIES
-        CXX_STANDARD 23
-        CXX_STANDARD_REQUIRED ON
-    )
-
-    target_compile_definitions(${testcase} PRIVATE CATCH_CONFIG_FAST_COMPILE)
-    target_include_directories(${testcase} PRIVATE "thirdparty/catch")
-
-    # Link against the ctbignum module library
-    target_link_libraries(${testcase} PRIVATE lam::ctbignum)
-
-    if (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
-        target_compile_options(${testcase} PRIVATE -Wno-deprecated -Wno-float-equal -fconstexpr-steps=2300000)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        set(_test_opts -Wno-deprecated -Wno-float-equal -fconstexpr-steps=2300000)
     elseif(CMAKE_COMPILER_IS_GNUCXX)
-        target_compile_options(${testcase} PRIVATE -Wno-deprecated -Wno-float-equal -fconstexpr-depth=30)
+        set(_test_opts -Wno-deprecated -Wno-float-equal -fconstexpr-depth=30)
+    else()
+        set(_test_opts "")
     endif()
+
+    ctbignum_add_executable(${testcase}
+        SOURCE   ${file}
+        CATCH_MAIN
+        INCLUDES thirdparty/catch
+        DEFINES  CATCH_CONFIG_FAST_COMPILE
+        OPTIONS  ${_test_opts})
 
     add_test(NAME "${testcase}_default"
       COMMAND ${testcase} ${CATCH_TEST_FILTER}
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
-    set_tests_properties("${testcase}_default" PROPERTIES LABELS "default")
+    # Catch v2 exits 0 when no tests run.
+    set_tests_properties("${testcase}_default" PROPERTIES
+      LABELS "default"
+      FAIL_REGULAR_EXPRESSION "No tests ran")
 
     add_test(NAME "${testcase}_all"
       COMMAND ${testcase} ${CATCH_TEST_FILTER} "*"
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
-    set_tests_properties("${testcase}_all" PROPERTIES LABELS "all")
+    set_tests_properties("${testcase}_all" PROPERTIES
+      LABELS "all"
+      FAIL_REGULAR_EXPRESSION "No tests ran")
 
 endforeach()
 # Check for NTL
@@ -70,32 +72,18 @@ find_library(NTL_LIBRARY NAMES ntl)
 find_library(GMP_LIBRARY NAMES gmp)
 
 if(NTL_INCLUDE_DIR AND NTL_LIBRARY AND GMP_LIBRARY)
-    add_executable(unit-modinv $<TARGET_OBJECTS:catch_main> src/unit-modinv.cpp)
-    target_link_libraries(unit-modinv PRIVATE lam::ctbignum ${NTL_LIBRARY} ${GMP_LIBRARY})
-    target_include_directories(unit-modinv PRIVATE "thirdparty/catch" ${NTL_INCLUDE_DIR})
-
-    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        target_compile_options(unit-modinv PRIVATE -fprebuilt-module-path=${CMAKE_BINARY_DIR}/CMakeFiles/lam_ctbignum.dir/include/ctbignum)
-    elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-        target_compile_options(unit-modinv PRIVATE -fmodules-ts)
-    endif()
-
-    # We need to manually add the dependency on the library's module file for the test executable
-    add_dependencies(unit-modinv lam::ctbignum)
-
-    # Set the C++ standard for the test target
-    set_property(TARGET unit-modinv PROPERTY CXX_STANDARD 23)
-    set_property(TARGET unit-modinv PROPERTY CXX_STANDARD_REQUIRED ON)
-    set_property(TARGET unit-modinv PROPERTY CXX_EXTENSIONS OFF)
-
-    # Enable module scanning for the test
-    set_property(TARGET unit-modinv PROPERTY CXX_SCAN_FOR_MODULES ON)
-    set_property(TARGET unit-modinv PROPERTY CXX_MODULE_STD ON)
+    ctbignum_add_executable(unit-modinv
+        SOURCE   src/unit-modinv.cpp
+        CATCH_MAIN
+        LIBS     ${NTL_LIBRARY} ${GMP_LIBRARY}
+        INCLUDES thirdparty/catch ${NTL_INCLUDE_DIR}
+        OPTIONS  $<$<CXX_COMPILER_ID:Clang>:-fconstexpr-steps=2300000>)
 
     add_test(NAME unit-modinv_run COMMAND unit-modinv)
+    set_tests_properties(unit-modinv_run PROPERTIES
+      FAIL_REGULAR_EXPRESSION "No tests ran")
 else()
     message(STATUS "NTL or GMP not found. Skipping modinv tests.")
 endif()
 
-add_executable(check_kyber_prime src/test_kyber_prime.cpp)
-target_link_libraries(check_kyber_prime PRIVATE lam::ctbignum)
+ctbignum_add_executable(check_kyber_prime SOURCE src/test_kyber_prime.cpp)

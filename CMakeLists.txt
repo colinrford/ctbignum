@@ -11,92 +11,39 @@
 
 cmake_minimum_required(VERSION 3.31.6)
 
-if(CMAKE_VERSION VERSION_GREATER_EQUAL 4.0.3)
-  set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
-elseif(CMAKE_VERSION VERSION_GREATER_EQUAL 4.0.0)
-  set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "a9e1cf81-9932-4810-974b-6eccaf14e457")
-elseif(CMAKE_VERSION VERSION_GREATER_EQUAL 3.31.6)
-  set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "0e5b6991-d74f-4b3d-a41c-cf096e0b2508")
-else()
-  message(FATAL_ERROR "Version lower than 3.31.6 not supported (by me)")
-endif()
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/LamCxxModuleStd.cmake)
 
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_MODULE_STD ON)
-set(CMAKE_CXX_SCAN_FOR_MODULES ON)
-
-##
 ## PROJECT
-## name and version
-##
-project(lam_ctbignum VERSION 0.7.260308 LANGUAGES CXX)
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" _lam_ctbignum_version)
+string(STRIP "${_lam_ctbignum_version}" _lam_ctbignum_version)
+project(lam_ctbignum VERSION ${_lam_ctbignum_version} LANGUAGES CXX)
+
+set_property(DIRECTORY APPEND PROPERTY
+  CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-find_package(Git)
-if(GIT_FOUND)
-  execute_process(
-    COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    OUTPUT_VARIABLE GIT_HASH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
-else()
-  set(GIT_HASH "unknown")
-endif()
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/LamModule.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Sanitizers.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CtbignumHelpers.cmake)
 
-if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE MATCHES "^[Dd][Ee][Bb][Uu][Gg]$")
-  set(IS_DEBUG "true")
-else()
-  set(IS_DEBUG "false")
-endif()
-
-if(MSVC)
-  # MSVC never has __int128. Avoid check_cxx_source_compiles here — it
-  # inherits CMAKE_CXX_MODULE_STD ON and fails in the TryCompile scratch dir.
-  set(CBN_HAS_INT128_BOOL "false")
-  set(CBN_UINT128_TYPE_ALIAS "using uint128_or_void = void;")
-else()
-  # __int128 is a well-known Clang/GCC extension, always available on these.
-  set(CBN_HAS_INT128_BOOL "true")
-  set(CBN_UINT128_TYPE_ALIAS "using uint128_or_void = unsigned __int128;")
-endif()
-
-configure_file(
-  include/ctbignum/ctbignum_config.cppm.in
-  ${CMAKE_CURRENT_BINARY_DIR}/ctbignum_config.cppm
-)
-
-##
 ## OPTIONS
-##
-option(LAM_CTBIGNUM_BuildTests "Build the unit tests when BUILD_TESTING is enabled." OFF)
-option(LAM_CTBIGNUM_BuildBenchmarks "Build the benchmarks." OFF)
+# The Conan recipe turns both off; test/ and benchmarks/ aren't exported.
+option(LAM_CTBIGNUM_BUILD_TESTS "Build the unit tests." ON)
+option(LAM_CTBIGNUM_BUILD_BENCHMARKS "Build the benchmarks." ON)
 
-##
-## CONFIGURATION
-##
-set(LAM_CTBIGNUM_TARGET_NAME               lam_ctbignum)
-set(LAM_CTBIGNUM_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/include/")
-
-##
 ## TARGET
-## create target and add module sources
-##
-add_library(${LAM_CTBIGNUM_TARGET_NAME} STATIC)
-target_sources(${LAM_CTBIGNUM_TARGET_NAME}
+add_library(lam_ctbignum STATIC)
+target_sources(lam_ctbignum
     PUBLIC
     FILE_SET CXX_MODULES
     TYPE CXX_MODULES
-    BASE_DIRS ${PROJECT_SOURCE_DIR}/include ${CMAKE_CURRENT_BINARY_DIR}
+    BASE_DIRS ${PROJECT_SOURCE_DIR}/include
     FILES
         # Primary module interface
         include/ctbignum/ctbignum.cppm
-        ${CMAKE_CURRENT_BINARY_DIR}/ctbignum_config.cppm
         # Module partitions (in dependency order)
         include/ctbignum/bigint.cppm
         include/ctbignum/slicing.cppm
@@ -119,60 +66,46 @@ target_sources(${LAM_CTBIGNUM_TARGET_NAME}
         include/ctbignum/field.cppm
         include/ctbignum/roots.cppm
 )
-add_library(lam::ctbignum ALIAS ${LAM_CTBIGNUM_TARGET_NAME})
-set_target_properties(${LAM_CTBIGNUM_TARGET_NAME} PROPERTIES OUTPUT_NAME lam_ctbignum)
+add_library(lam::ctbignum ALIAS lam_ctbignum)
+add_library(lam_ctbignum::ctbignum ALIAS lam_ctbignum)
 
-##
-## TESTS
-## create and configure the unit test target
-##
-if(LAM_CTBIGNUM_BuildTests)
-    include(CTest)
-    if(BUILD_TESTING)
-        enable_testing()
-        add_subdirectory(test)
-    endif()
+# Target stays lam_ctbignum: ctbignum_add_executable hard-codes lam_ctbignum.dir.
+set_target_properties(lam_ctbignum PROPERTIES
+  OUTPUT_NAME lam_ctbignum
+  EXPORT_NAME ctbignum)
+
+target_compile_features(lam_ctbignum PUBLIC cxx_std_23)
+
+# Not check_cxx_source_compiles: try-compile inherits CMAKE_CXX_MODULE_STD and fails.
+if(MSVC)
+  set(CBN_HAS_INT128_BOOL "false")
+  set(CBN_UINT128_TYPE_ALIAS "using uint128_or_void = void;")
+else()
+  set(CBN_HAS_INT128_BOOL "true")
+  set(CBN_UINT128_TYPE_ALIAS "using uint128_or_void = unsigned __int128;")
 endif()
 
-if(LAM_CTBIGNUM_BuildBenchmarks)
+lam_add_config_partition(lam_ctbignum NAME ctbignum
+  TEMPLATE ${CMAKE_CURRENT_SOURCE_DIR}/include/ctbignum/ctbignum_config.cppm.in
+  EXTRA_DEFINES
+    -DCBN_HAS_INT128_BOOL=${CBN_HAS_INT128_BOOL}
+    "-DCBN_UINT128_TYPE_ALIAS=${CBN_UINT128_TYPE_ALIAS}")
+
+enable_testing()
+lam_add_config_dump(lam_ctbignum NAME ctbignum)
+
+## TESTS / BENCHMARKS
+if(LAM_CTBIGNUM_BUILD_TESTS)
+    add_subdirectory(test)
+endif()
+
+if(LAM_CTBIGNUM_BUILD_BENCHMARKS)
     add_subdirectory(benchmarks)
 endif()
 
-##
 ## INSTALL
-## install targets
-##
-include(GNUInstallDirs)
-
-install(TARGETS ${LAM_CTBIGNUM_TARGET_NAME}
-    EXPORT ${PROJECT_NAME}Targets
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    FILE_SET CXX_MODULES DESTINATION ${CMAKE_INSTALL_LIBDIR}/c++/v1
-)
-
-install(EXPORT ${PROJECT_NAME}Targets
-    FILE ${PROJECT_NAME}Targets.cmake
-    NAMESPACE lam::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
-)
-
-include(CMakePackageConfigHelpers)
-
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake" [[
-include(CMakeFindDependencyMacro)
-include("${CMAKE_CURRENT_LIST_DIR}/lam_ctbignumTargets.cmake")
-]])
-
-write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-    VERSION ${PROJECT_VERSION}
-    COMPATIBILITY SameMajorVersion
-)
-
-install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+lam_install_module_package(lam_ctbignum
+  NAME        ctbignum
+  DESCRIPTION "lam.ctbignum — compile-time big integer arithmetic (C++23 modules)"
+  LICENSE     "Apache-2.0"
 )

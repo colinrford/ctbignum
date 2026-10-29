@@ -821,6 +821,7 @@ static void montmul_libff(benchmark::State &state) {
     benchmark::DoNotOptimize(z);
   }
 }
+*/
 
 static void mont_reduction(benchmark::State &state) {
 

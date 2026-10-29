@@ -12,6 +12,7 @@
 #include <NTL/ZZ.h>
 #include <NTL/ZZ_p.h>
 #include <benchmark/benchmark.h>
+#include <gmp.h>
 
 import std;
 import lam.ctbignum;

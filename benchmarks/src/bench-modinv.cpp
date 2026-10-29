@@ -9,6 +9,7 @@
 // This file is distributed under the Apache License, Version 2.0. See the LICENSE
 // file for details.
 
+#include <gmp.h>
 #include <benchmark/benchmark.h>
 
 import std;

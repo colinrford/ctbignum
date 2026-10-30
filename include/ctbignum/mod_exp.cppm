@@ -27,9 +27,9 @@ export template<std::size_t N1, std::size_t N2, typename T, T... Modulus>
 constexpr auto mod_exp(big_int<N1, T> a, big_int<N2, T> exp, std::integer_sequence<T, Modulus...> modulus)
 {
   constexpr auto N = modulus.size();
-  constexpr big_int<N, T> m{Modulus...};
-  constexpr auto R_mod_m = div(detail::unary_encoding<N, N + 1>(), m).remainder;
-  constexpr auto Rsq_mod_m = div(detail::unary_encoding<2 * N, 2 * N + 1>(), m).remainder;
+  static constexpr big_int<N, T> m{Modulus...};
+  static constexpr auto R_mod_m = div(detail::unary_encoding<N, N + 1>(), m).remainder;
+  static constexpr auto Rsq_mod_m = div(detail::unary_encoding<2 * N, 2 * N + 1>(), m).remainder;
 
   auto result = R_mod_m;
   auto base = montgomery_mul(a, Rsq_mod_m, modulus);

@@ -49,7 +49,7 @@ constexpr auto montgomery_reduction(big_int<N1, T> A, std::integer_sequence<T, M
 
   auto accum = pad<1>(A);
 
-  for (auto i = 0; i < N2; ++i)
+  for (std::size_t i = 0; i < N2; ++i)
   {
     auto prod = short_mul(m, accum[i] * mprime);
     auto prod2 = limbwise_shift_left<N1 + 1>(prod, i);
@@ -97,13 +97,13 @@ constexpr auto montgomery_mul(big_int<N, T> x, big_int<N, T> y, std::integer_seq
     {
       TT t = static_cast<TT>(y[j]) * static_cast<TT>(x[i]) + A[j] + k;
       TT t2 = static_cast<TT>(m[j]) * static_cast<TT>(u_i) + static_cast<T>(t) + k2;
-      A[j - 1] = t2;
+      A[j - 1] = static_cast<T>(t2);
       k = t >> std::numeric_limits<T>::digits;
       k2 = t2 >> std::numeric_limits<T>::digits;
     }
 
     TT tmp = static_cast<TT>(A[N]) + k + k2;
-    A[N - 1] = tmp;
+    A[N - 1] = static_cast<T>(tmp);
     A[N] = tmp >> std::numeric_limits<T>::digits;
   }
 
@@ -150,7 +150,7 @@ constexpr auto montgomery_reduction(big_int<N1, T> A, big_int<N2, T> m, detail::
 
   auto accum = pad<1>(A);
 
-  for (auto i = 0; i < N2; ++i)
+  for (std::size_t i = 0; i < N2; ++i)
   {
     auto prod = short_mul(m, accum[i] * mprime);
     auto prod2 = limbwise_shift_left<N1 + 1>(prod, i);
@@ -179,7 +179,7 @@ constexpr auto montgomery_mul(big_int<N, T> x, big_int<N, T> y, big_int<N, T> m,
   using TT = typename dbl_bitlen<T>::type;
   big_int<N + 1, T> A{};
 
-  for (auto i = 0; i < N; ++i)
+  for (std::size_t i = 0; i < N; ++i)
   {
     T u_i = (A[0] + x[i] * y[0]) * mprime;
 
@@ -192,17 +192,17 @@ constexpr auto montgomery_mul(big_int<N, T> x, big_int<N, T> y, big_int<N, T> m,
     k = z >> std::numeric_limits<T>::digits;
     k2 = z2 >> std::numeric_limits<T>::digits;
 
-    for (auto j = 1; j < N; ++j)
+    for (std::size_t j = 1; j < N; ++j)
     {
       TT t = static_cast<TT>(y[j]) * static_cast<TT>(x[i]) + A[j] + k;
       TT t2 = static_cast<TT>(m[j]) * static_cast<TT>(u_i) + static_cast<T>(t) + k2;
-      A[j - 1] = t2;
+      A[j - 1] = static_cast<T>(t2);
       k = t >> std::numeric_limits<T>::digits;
       k2 = t2 >> std::numeric_limits<T>::digits;
     }
 
     TT tmp = static_cast<TT>(A[N]) + k + k2;
-    A[N - 1] = tmp;
+    A[N - 1] = static_cast<T>(tmp);
     A[N] = tmp >> std::numeric_limits<T>::digits;
   }
 

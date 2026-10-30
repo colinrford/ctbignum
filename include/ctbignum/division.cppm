@@ -40,7 +40,7 @@ constexpr DivisionResult<big_int<M, T>, big_int<1, T>> short_div(big_int<M, T> u
   for (int i = M - 1; i >= 0; --i)
   {
     TT w = (r << std::numeric_limits<T>::digits) + u[i];
-    q[i] = w / v;
+    q[i] = static_cast<T>(w / v);
     r = w % v;
   }
   return {q, {static_cast<T>(r)}};
@@ -80,7 +80,7 @@ constexpr DivisionResult<big_int<M, T>, big_int<N, T>> div(big_int<M, T> u, big_
     for (int i = M - 1; i >= 0; --i)
     {
       TT w = (r << std::numeric_limits<T>::digits) + u[i];
-      q[i] = w / v[0];
+      q[i] = static_cast<T>(w / v[0]);
       r = w % v[0];
     }
     return {q, {static_cast<T>(r)}};
@@ -125,7 +125,7 @@ constexpr DivisionResult<big_int<M, T>, big_int<N, T>> div(big_int<M, T> u, big_
       for (std::size_t i = 0; i <= tight_N; ++i)
         us[j + i] = true_value[i];
     }
-    q[j] = qhat;
+    q[j] = static_cast<T>(qhat);
   }
   return {q, shift_right(detail::first<N>(us), k)};
 }

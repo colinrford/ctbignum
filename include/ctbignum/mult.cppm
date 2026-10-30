@@ -31,7 +31,7 @@ constexpr auto short_mul(big_int<N, T> a, T b)
   {
     TT t = static_cast<TT>(a[j]) * static_cast<TT>(b) + k;
     p[j] = static_cast<T>(t);
-    k = t >> std::numeric_limits<T>::digits;
+    k = static_cast<T>(t >> std::numeric_limits<T>::digits);
   }
   p[N] = k;
   return p;
@@ -52,7 +52,7 @@ constexpr auto mul(big_int<M, T> u, big_int<N, T> v)
     {
       TT t = static_cast<TT>(u[i]) * static_cast<TT>(v[j]) + w[i + j] + k;
       w[i + j] = static_cast<T>(t);
-      k = t >> std::numeric_limits<T>::digits;
+      k = static_cast<T>(t >> std::numeric_limits<T>::digits);
     }
     w[j + M] = k;
     //}
@@ -77,7 +77,7 @@ constexpr auto partial_mul(big_int<M, T> u, big_int<N, T> v)
     {
       TT t = static_cast<TT>(u[i]) * static_cast<TT>(v[j]) + w[i + j] + k;
       w[i + j] = static_cast<T>(t);
-      k = t >> std::numeric_limits<T>::digits;
+      k = static_cast<T>(t >> std::numeric_limits<T>::digits);
     }
     if (j + M < ResultLength)
       w[j + M] = k;

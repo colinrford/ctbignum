@@ -90,21 +90,21 @@ constexpr auto montgomery_mul(big_int<N, T> x, big_int<N, T> y, std::integer_seq
 
     TT z = static_cast<TT>(y[0]) * static_cast<TT>(x[i]) + A[0] + k;
     TT z2 = static_cast<TT>(m[0]) * static_cast<TT>(u_i) + static_cast<T>(z) + k2;
-    k = z >> std::numeric_limits<T>::digits;
-    k2 = z2 >> std::numeric_limits<T>::digits;
+    k = static_cast<T>(z >> std::numeric_limits<T>::digits);
+    k2 = static_cast<T>(z2 >> std::numeric_limits<T>::digits);
 
     for (std::size_t j = 1; j < N; ++j)
     {
       TT t = static_cast<TT>(y[j]) * static_cast<TT>(x[i]) + A[j] + k;
       TT t2 = static_cast<TT>(m[j]) * static_cast<TT>(u_i) + static_cast<T>(t) + k2;
       A[j - 1] = static_cast<T>(t2);
-      k = t >> std::numeric_limits<T>::digits;
-      k2 = t2 >> std::numeric_limits<T>::digits;
+      k = static_cast<T>(t >> std::numeric_limits<T>::digits);
+      k2 = static_cast<T>(t2 >> std::numeric_limits<T>::digits);
     }
 
     TT tmp = static_cast<TT>(A[N]) + k + k2;
     A[N - 1] = static_cast<T>(tmp);
-    A[N] = tmp >> std::numeric_limits<T>::digits;
+    A[N] = static_cast<T>(tmp >> std::numeric_limits<T>::digits);
   }
 
   auto padded_mod = pad<1>(m);
@@ -189,21 +189,21 @@ constexpr auto montgomery_mul(big_int<N, T> x, big_int<N, T> y, big_int<N, T> m,
 
     TT z = static_cast<TT>(y[0]) * static_cast<TT>(x[i]) + A[0] + k;
     TT z2 = static_cast<TT>(m[0]) * static_cast<TT>(u_i) + static_cast<T>(z) + k2;
-    k = z >> std::numeric_limits<T>::digits;
-    k2 = z2 >> std::numeric_limits<T>::digits;
+    k = static_cast<T>(z >> std::numeric_limits<T>::digits);
+    k2 = static_cast<T>(z2 >> std::numeric_limits<T>::digits);
 
     for (std::size_t j = 1; j < N; ++j)
     {
       TT t = static_cast<TT>(y[j]) * static_cast<TT>(x[i]) + A[j] + k;
       TT t2 = static_cast<TT>(m[j]) * static_cast<TT>(u_i) + static_cast<T>(t) + k2;
       A[j - 1] = static_cast<T>(t2);
-      k = t >> std::numeric_limits<T>::digits;
-      k2 = t2 >> std::numeric_limits<T>::digits;
+      k = static_cast<T>(t >> std::numeric_limits<T>::digits);
+      k2 = static_cast<T>(t2 >> std::numeric_limits<T>::digits);
     }
 
     TT tmp = static_cast<TT>(A[N]) + k + k2;
     A[N - 1] = static_cast<T>(tmp);
-    A[N] = tmp >> std::numeric_limits<T>::digits;
+    A[N] = static_cast<T>(tmp >> std::numeric_limits<T>::digits);
   }
 
   auto padded_mod = pad<1>(m);

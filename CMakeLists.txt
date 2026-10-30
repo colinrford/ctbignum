@@ -84,7 +84,7 @@ if(MSVC)
   set(CBN_UINT128_TYPE_ALIAS "using uint128_or_void = void;")
 else()
   set(CBN_HAS_INT128_BOOL "true")
-  set(CBN_UINT128_TYPE_ALIAS "using uint128_or_void = unsigned __int128;")
+  set(CBN_UINT128_TYPE_ALIAS "__extension__ using uint128_or_void = unsigned __int128;")
 endif()
 
 lam_add_config_partition(lam_ctbignum NAME ctbignum

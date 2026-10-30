@@ -1,0 +1,21 @@
+option(LAM_ENABLE_WARNINGS "Enable strict compiler warnings" ON)
+option(LAM_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
+
+function(lam_target_warnings target)
+  if(NOT LAM_ENABLE_WARNINGS)
+    return()
+  endif()
+
+  if(MSVC)
+    target_compile_options(${target} PRIVATE /W4)
+    if(LAM_WARNINGS_AS_ERRORS)
+      target_compile_options(${target} PRIVATE /WX)
+    endif()
+  else()
+    target_compile_options(${target} PRIVATE
+      -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow)
+    if(LAM_WARNINGS_AS_ERRORS)
+      target_compile_options(${target} PRIVATE -Werror)
+    endif()
+  endif()
+endfunction()

@@ -27,6 +27,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/LamModule.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Sanitizers.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Warnings.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CtbignumHelpers.cmake)
 
 ## OPTIONS
@@ -75,6 +76,7 @@ set_target_properties(lam_ctbignum PROPERTIES
   EXPORT_NAME ctbignum)
 
 target_compile_features(lam_ctbignum PUBLIC cxx_std_23)
+lam_target_warnings(lam_ctbignum)
 
 # Not check_cxx_source_compiles: try-compile inherits CMAKE_CXX_MODULE_STD and fails.
 if(MSVC)

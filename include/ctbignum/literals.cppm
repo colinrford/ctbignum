@@ -36,7 +36,7 @@ constexpr auto chars_to_big_int(std::integer_sequence<char, Chars...>)
   big_int<N, T> num{0};
   big_int<N, T> power_of_ten{1};
 
-  for (int i = len - 1; i >= 0; --i)
+  for (std::size_t i = len; i-- > 0;)
   {
     num = add_ignore_carry(num, partial_mul<N>(big_int<1, T>{static_cast<T>(digits[i]) - 48}, power_of_ten));
     power_of_ten = partial_mul<N>(big_int<1, T>{static_cast<T>(10)}, power_of_ten);

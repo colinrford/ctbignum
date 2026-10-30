@@ -17,18 +17,18 @@ import lam.ctbignum;
 
 using namespace lam::cbn::literals;
 
-template<size_t N, typename T>
+template<std::size_t N, typename T>
 void modinv_gmp(benchmark::State& state, lam::cbn::big_int<N, T> const& prime)
 {
 
-  constexpr size_t n = N;
-  size_t k = mpn_sec_invert_itch(n);
+  constexpr std::size_t n = N;
+  std::size_t k = static_cast<std::size_t>(mpn_sec_invert_itch(n));
   std::vector<mp_limb_t> scratch(k, 0);
 
   std::array<mp_limb_t, n> modulus{};
   memcpy(modulus.data(), prime.data(), N * sizeof(T));
 
-  size_t total_sz = n * 1000;
+  std::size_t total_sz = n * 1000;
   std::vector<mp_limb_t> data(total_sz);
   std::default_random_engine generator;
   std::uniform_int_distribution<mp_limb_t> distribution(0);
@@ -38,13 +38,13 @@ void modinv_gmp(benchmark::State& state, lam::cbn::big_int<N, T> const& prime)
   mp_limb_t* base_ptr = data.data();
 
   mp_limb_t dummy_quotient[n];
-  for (size_t i = 0; i < 1000; ++i)
+  for (std::size_t i = 0; i < 1000; ++i)
   {
     mpn_tdiv_qr(dummy_quotient, base_ptr + i * n, 0, base_ptr + i * n, n, modulus.data(), n);
     // modular reduction
   }
 
-  size_t i = 0;
+  std::size_t i = 0;
   mp_limb_t result[n];
 
   for (auto _ : state)
@@ -59,16 +59,16 @@ void modinv_gmp(benchmark::State& state, lam::cbn::big_int<N, T> const& prime)
   }
 }
 
-template<size_t N, typename T>
+template<std::size_t N, typename T>
 void modinv_cbn(benchmark::State& state, lam::cbn::big_int<N, T> const& prime)
 {
 
-  constexpr size_t n = N;
+  constexpr std::size_t n = N;
 
   std::array<mp_limb_t, n> modulus{};
   memcpy(modulus.data(), prime.data(), N * sizeof(T));
 
-  size_t total_sz = n * 1000;
+  std::size_t total_sz = n * 1000;
   std::vector<mp_limb_t> data(total_sz);
   std::default_random_engine generator;
   std::uniform_int_distribution<mp_limb_t> distribution(0);
@@ -78,13 +78,13 @@ void modinv_cbn(benchmark::State& state, lam::cbn::big_int<N, T> const& prime)
   mp_limb_t* base_ptr = data.data();
 
   mp_limb_t dummy_quotient[n];
-  for (size_t i = 0; i < 1000; ++i)
+  for (std::size_t i = 0; i < 1000; ++i)
   {
     mpn_tdiv_qr(dummy_quotient, base_ptr + i * n, 0, base_ptr + i * n, n, modulus.data(), n);
     // modular reduction
   }
 
-  size_t i = 0;
+  std::size_t i = 0;
 
   for (auto _ : state)
   {

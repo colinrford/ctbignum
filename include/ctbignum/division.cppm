@@ -37,7 +37,7 @@ constexpr DivisionResult<big_int<M, T>, big_int<1, T>> short_div(big_int<M, T> u
   using TT = typename dbl_bitlen<T>::type;
   TT r{0};
   big_int<M, T> q{};
-  for (int i = M - 1; i >= 0; --i)
+  for (std::size_t i = M; i-- > 0;)
   {
     TT w = (r << std::numeric_limits<T>::digits) + u[i];
     q[i] = static_cast<T>(w / v);
@@ -77,7 +77,7 @@ constexpr DivisionResult<big_int<M, T>, big_int<N, T>> div(big_int<M, T> u, big_
   if (tight_N == 1)
   { // short division
     TT r{};
-    for (int i = M - 1; i >= 0; --i)
+    for (std::size_t i = M; i-- > 0;)
     {
       TT w = (r << std::numeric_limits<T>::digits) + u[i];
       q[i] = static_cast<T>(w / v[0]);
@@ -94,7 +94,7 @@ constexpr DivisionResult<big_int<M, T>, big_int<N, T>> div(big_int<M, T> u, big_
   }
   auto us = shift_left(u, k);
 
-  for (int j = M - tight_N; j >= 0; --j)
+  for (std::size_t j = M >= tight_N ? M - tight_N + 1 : 0; j-- > 0;)
   {
     TT tmp = us[j + tight_N - 1];
     TT tmp2 = us[j + tight_N];

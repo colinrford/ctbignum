@@ -26,7 +26,7 @@ void modinv_gmp(benchmark::State& state, lam::cbn::big_int<N, T> const& prime)
   std::vector<mp_limb_t> scratch(k, 0);
 
   std::array<mp_limb_t, n> modulus{};
-  memcpy(modulus.data(), prime.data(), N * sizeof(T));
+  std::memcpy(modulus.data(), prime.data(), N * sizeof(T));
 
   std::size_t total_sz = n * 1000;
   std::vector<mp_limb_t> data(total_sz);
@@ -66,7 +66,7 @@ void modinv_cbn(benchmark::State& state, lam::cbn::big_int<N, T> const& prime)
   constexpr std::size_t n = N;
 
   std::array<mp_limb_t, n> modulus{};
-  memcpy(modulus.data(), prime.data(), N * sizeof(T));
+  std::memcpy(modulus.data(), prime.data(), N * sizeof(T));
 
   std::size_t total_sz = n * 1000;
   std::vector<mp_limb_t> data(total_sz);

@@ -31,7 +31,7 @@ static void modadd(benchmark::State& state)
   big_int<4> x;
   big_int<4> y;
 
-  for (int i = 0; i < 4; ++i)
+  for (std::size_t i = 0; i < 4; ++i)
   {
     x[i] = distribution(generator);
     y[i] = distribution(generator);
@@ -39,6 +39,8 @@ static void modadd(benchmark::State& state)
 
   for (auto _ : state)
   {
+    benchmark::DoNotOptimize(x);
+    benchmark::DoNotOptimize(y);
     benchmark::DoNotOptimize(lam::cbn::mod_add(x, y, prime));
   }
 }
@@ -77,7 +79,7 @@ static void modmul(benchmark::State& state)
   big_int<4> x;
   big_int<4> y;
 
-  for (int i = 0; i < 4; ++i)
+  for (std::size_t i = 0; i < 4; ++i)
   {
     x[i] = distribution(generator);
     y[i] = distribution(generator);
@@ -85,6 +87,8 @@ static void modmul(benchmark::State& state)
 
   for (auto _ : state)
   {
+    benchmark::DoNotOptimize(x);
+    benchmark::DoNotOptimize(y);
     auto j = lam::cbn::mul(x, y);
     auto k = lam::cbn::barrett_reduction(j, prime); //, mu);
     benchmark::DoNotOptimize(k);
@@ -94,19 +98,19 @@ static void modmul(benchmark::State& state)
 class MyFixture : public ::benchmark::Fixture
 {
 public:
-  void SetUp(const ::benchmark::State& state)
+  void SetUp(const ::benchmark::State&)
   {
 
     std::default_random_engine generator;
     std::uniform_int_distribution<uint64_t> distribution(0);
 
-    data.reserve(8 * 1000);
+    data.resize(8 * 1000);
 
-    for (auto limb : data)
+    for (auto& limb : data)
       limb = distribution(generator);
   }
 
-  void TearDown(const ::benchmark::State& state) { data.clear(); }
+  void TearDown(const ::benchmark::State&) { data.clear(); }
 
   ~MyFixture() {}
 
@@ -118,7 +122,7 @@ BENCHMARK_F(MyFixture, fixture_mul)(benchmark::State& st)
 
   using namespace lam::cbn;
 
-  constexpr auto prime = 1606938044258990275541962092341162602522202993782792835301611_Z;
+  [[maybe_unused]] constexpr auto prime = 1606938044258990275541962092341162602522202993782792835301611_Z;
 
   size_t i = 0;
   auto base_ptr = data.data();
@@ -230,6 +234,8 @@ static void modexp_mont(benchmark::State& state)
 
   for (auto _ : state)
   {
+    benchmark::DoNotOptimize(a);
+    benchmark::DoNotOptimize(exp);
     auto z = mod_exp(a, exp, modulus);
     benchmark::DoNotOptimize(z);
   }
@@ -305,13 +311,14 @@ static void reduce_intseq(benchmark::State& state)
 
   big_int<5> x;
 
-  for (int i = 0; i < 5; ++i)
+  for (std::size_t i = 0; i < 5; ++i)
   {
     x[i] = distribution(generator);
   }
 
   for (auto _ : state)
   {
+    benchmark::DoNotOptimize(x);
     auto modulus = 1606938044258990275541962092341162602522202993782792835301611_Z;
     benchmark::DoNotOptimize(barrett_reduction(x, modulus));
   }
@@ -373,13 +380,15 @@ static void modadd_immediate(benchmark::State& state)
   // big_int<4> x;
   big_int<4> x;
 
-  for (int i = 0; i < 4; ++i)
+  for (std::size_t i = 0; i < 4; ++i)
   {
     x[i] = distribution(generator);
   }
 
   for (auto _ : state)
   {
+    benchmark::DoNotOptimize(x);
+    benchmark::DoNotOptimize(y);
     auto k = mod_add(x, y, prime);
     benchmark::DoNotOptimize(k);
   }
@@ -443,7 +452,7 @@ static void mul_immediate(benchmark::State& state)
 
   // big_int<4> x;
   big_int<4> x;
-  for (int i = 0; i < 4; ++i)
+  for (std::size_t i = 0; i < 4; ++i)
   {
     x[i] = distribution(generator);
   }
@@ -459,6 +468,8 @@ static void mul_immediate(benchmark::State& state)
 
     state.ResumeTiming();
 */
+    benchmark::DoNotOptimize(x);
+    benchmark::DoNotOptimize(y);
     auto k = mul(x, y);
     benchmark::DoNotOptimize(k);
   }
@@ -541,7 +552,7 @@ static void mymul_routine(benchmark::State& state)
 
   big_int<4> x;
   big_int<4> y;
-  for (int i = 0; i < 4; ++i)
+  for (std::size_t i = 0; i < 4; ++i)
   {
     x[i] = distribution(generator);
     y[i] = distribution(generator);
@@ -549,6 +560,8 @@ static void mymul_routine(benchmark::State& state)
 
   for (auto _ : state)
   {
+    benchmark::DoNotOptimize(x);
+    benchmark::DoNotOptimize(y);
     auto k = lam::cbn::mul(x, y);
     benchmark::DoNotOptimize(k);
   }
@@ -655,13 +668,14 @@ static void mulmul(benchmark::State& state)
   std::uniform_int_distribution<uint64_t> distribution(rd());
 
   big_int<4> x;
-  for (int i = 0; i < 4; ++i)
+  for (std::size_t i = 0; i < 4; ++i)
   {
     x[i] = distribution(generator);
   }
 
   for (auto _ : state)
   {
+    benchmark::DoNotOptimize(x);
     auto k = lam::cbn::mul(x, x);
     benchmark::DoNotOptimize(k);
   }
@@ -716,7 +730,7 @@ static void montmul(benchmark::State& state)
 
   big_int<4> x;
   big_int<4> y;
-  for (int i = 0; i < 4; ++i)
+  for (std::size_t i = 0; i < 4; ++i)
   {
     x[i] = distribution(generator);
     y[i] = distribution(generator);
@@ -724,6 +738,8 @@ static void montmul(benchmark::State& state)
 
   for (auto _ : state)
   {
+    benchmark::DoNotOptimize(x);
+    benchmark::DoNotOptimize(y);
     auto z = lam::cbn::montgomery_mul(x, y, prime, inv);
     benchmark::DoNotOptimize(z);
   }
@@ -740,7 +756,7 @@ static void montmul_auto(benchmark::State& state)
 
   big_int<4> x;
   big_int<4> y;
-  for (int i = 0; i < 4; ++i)
+  for (std::size_t i = 0; i < 4; ++i)
   {
     x[i] = distribution(generator);
     y[i] = distribution(generator);
@@ -748,6 +764,8 @@ static void montmul_auto(benchmark::State& state)
 
   for (auto _ : state)
   {
+    benchmark::DoNotOptimize(x);
+    benchmark::DoNotOptimize(y);
     auto z = lam::cbn::montgomery_mul(x, y, prime);
     benchmark::DoNotOptimize(z);
   }
@@ -836,11 +854,12 @@ static void mont_reduction(benchmark::State &state) {
   std::uniform_int_distribution<uint64_t> distribution(0);
 
   big_int<8> x;
-  for (int i = 0; i < 8; ++i)
+  for (std::size_t i = 0; i < 8; ++i)
     x[i] = distribution(generator);
 
 
   for (auto _ : state) {
+    benchmark::DoNotOptimize(x);
     auto z = lam::cbn::montgomery_reduction(x, prime, inv);
     benchmark::DoNotOptimize(z);
   }
@@ -883,11 +902,12 @@ static void mont_reduction_auto(benchmark::State& state)
   std::uniform_int_distribution<uint64_t> distribution(0);
 
   big_int<8> x;
-  for (int i = 0; i < 8; ++i)
+  for (std::size_t i = 0; i < 8; ++i)
     x[i] = distribution(generator);
 
   for (auto _ : state)
   {
+    benchmark::DoNotOptimize(x);
     auto z = lam::cbn::montgomery_reduction(x, prime);
     benchmark::DoNotOptimize(z);
   }
@@ -973,6 +993,23 @@ BENCHMARK(mont_reduction_auto);
 // BENCHMARK(reduce_ntl);
 // BENCHMARK(mul_);
 // BENCHMARK(modexp);
+
+BENCHMARK(modadd);
+BENCHMARK(modadd_ntl);
+BENCHMARK(modadd_immediate);
+BENCHMARK(modadd_immediate_ntl);
+BENCHMARK(mul_immediate);
+BENCHMARK(mul_immediate_ntl);
+BENCHMARK(modmul);
+BENCHMARK(modmul_ntl);
+BENCHMARK(reduce_intseq);
+BENCHMARK(reduce_ntl);
+BENCHMARK(montmul);
+BENCHMARK(montmul_auto);
+BENCHMARK(mont_reduction);
+BENCHMARK(mont_reduction_auto);
+BENCHMARK(big_int_from_string);
+BENCHMARK(big_int_from_string_ntl);
 
 BENCHMARK(mymul_routine);
 BENCHMARK(mul_ntl);

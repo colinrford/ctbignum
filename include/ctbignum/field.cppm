@@ -91,7 +91,7 @@ auto Zq(std::integer_sequence<T, Modulus...>)
 { return ZqElement<T, Modulus...>{}; }
 
 export template<typename T, T... Modulus>
-constexpr auto extract_modulus(ZqElement<T, Modulus...> a)
+constexpr auto extract_modulus(ZqElement<T, Modulus...>)
 { return std::integer_sequence<T, Modulus...>{}; }
 
 export template<typename T, T... M>

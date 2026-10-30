@@ -76,7 +76,7 @@ std::ostream& operator<<(std::ostream& strm, cbn::big_int<N, T> num)
   using Radix = Radix10<T>;
   auto buf = convert_radix<Radix>(num);
   // remove leading zeros, except the last zero if obj == 0
-  int offset = 0;
+  std::size_t offset = 0;
   auto one_before_end = buf.cend() - 1;
   for (auto it = buf.cbegin(); it != one_before_end; ++it)
   {
@@ -85,7 +85,7 @@ std::ostream& operator<<(std::ostream& strm, cbn::big_int<N, T> num)
     ++offset;
   }
   strm << Radix::prefix;
-  strm.write(buf.cbegin() + offset, buf.size() - offset);
+  strm.write(buf.data() + offset, static_cast<std::streamsize>(buf.size() - offset));
   return strm;
 }
 } // namespace lam::cbn
@@ -105,7 +105,7 @@ struct formatter<lam::cbn::big_int<N, T>>
     auto buf = lam::cbn::convert_radix<Radix>(num);
 
     // remove leading zeros
-    int offset = 0;
+    std::size_t offset = 0;
     auto one_before_end = buf.cend() - 1;
     for (auto it = buf.cbegin(); it != one_before_end; ++it)
     {

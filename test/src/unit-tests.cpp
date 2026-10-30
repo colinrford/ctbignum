@@ -281,9 +281,6 @@ TEST_CASE("short div")
   constexpr auto a = to_big_int(12103081107736073677280037_Z);
   constexpr auto b = to_big_int(2893462387_Z);
 
-  constexpr auto ans = to_big_int(4182905975247458_Z);
-  //   418290597524622793977
-
   constexpr auto quotrem = lam::cbn::short_div(a, b[0]);
 
   static_assert(quotrem.quotient[0] == 4182905975247458, "fail");

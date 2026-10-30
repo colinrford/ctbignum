@@ -42,9 +42,9 @@ constexpr auto mod_inv(big_int<N, T> const& x, big_int<N, T> const& n)
   big_int<N, T> u{1};
   big_int<N, T> v{0};
 
-  int ell = detail::bit_length(n);
+  std::size_t ell = detail::bit_length(n);
 
-  for (int i = 0; i < 2 * ell; ++i)
+  for (std::size_t i = 0; i < 2 * ell; ++i)
   {
 
     T odd = a[0] & 1;

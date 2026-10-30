@@ -16,10 +16,11 @@ function(ctbignum_add_executable NAME)
   endif()
 
   add_executable(${NAME} ${_sources})
+  lam_target_warnings(${NAME})
 
   target_link_libraries(${NAME} PRIVATE lam::ctbignum ${ARG_LIBS})
   if(ARG_INCLUDES)
-    target_include_directories(${NAME} PRIVATE ${ARG_INCLUDES})
+    target_include_directories(${NAME} SYSTEM PRIVATE ${ARG_INCLUDES})
   endif()
   if(ARG_DEFINES)
     target_compile_definitions(${NAME} PRIVATE ${ARG_DEFINES})

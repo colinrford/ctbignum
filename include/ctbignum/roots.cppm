@@ -106,12 +106,21 @@ constexpr bool is_prime(std::integer_sequence<T, Modulus...>)
     }
 
     if (!witness_found)
-      return false; // Composite
+      return false;
   }
-  return true; // Likely prime
+  return true;
 }
 
 } // namespace detail
+
+export template<typename T, T... Modulus>
+concept prime_modulus = detail::is_prime(std::integer_sequence<T, Modulus...>{});
+
+// Zq restricted to prime moduli
+export template<typename T, T... Modulus>
+  requires prime_modulus<T, Modulus...>
+auto Fp(std::integer_sequence<T, Modulus...>)
+{ return ZqElement<T, Modulus...>{}; }
 
 // Check if n is a quadratic residue mod p using Euler's criterion
 // n^((p - 1) / 2) ≡ 1 (mod p) iff n is a quadratic residue
@@ -131,8 +140,9 @@ constexpr bool is_quadratic_residue(ZqElement<T, Modulus...> n)
 }
 
 // Tonelli-Shanks algorithm for computing modular square roots
-// Returns std::optional<ZqElement> - nullopt if n is not a quadratic residue
+// Returns nullopt if n is not a quadratic residue
 export template<typename T, T... Modulus>
+  requires prime_modulus<T, Modulus...>
 constexpr auto sqrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Modulus...>>
 {
   constexpr std::size_t N = sizeof...(Modulus);
@@ -143,10 +153,6 @@ constexpr auto sqrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
   if (n.data == big_int<N, T>{})
     return ZqElement<T, Modulus...>{};
 
-  // Check primality to prevent infinite loops (and ensure field properties)
-  if (!detail::is_prime(std::integer_sequence<T, Modulus...>{}))
-    return std::nullopt;
-  // Check if n is a quadratic residue to prevent infinite loops
   if (!is_quadratic_residue(n))
     return std::nullopt;
   // Factor p - 1 = Q * 2^S
@@ -198,9 +204,10 @@ constexpr auto sqrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
 }
 
 // Cube root in finite field
-// Uses the formula: cbrt(a) = a^((2 * (p - 1)) / 3) when p ≡ 2 (mod 3)
+// Uses the formula: cbrt(a) = a^((2p - 1) / 3) when p ≡ 2 (mod 3)
 // Returns nullopt if n is not a cubic residue (when p ≡ 1 mod 3)
 export template<typename T, T... Modulus>
+  requires prime_modulus<T, Modulus...>
 constexpr auto cbrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Modulus...>>
 {
   constexpr std::size_t N = sizeof...(Modulus);
@@ -212,10 +219,6 @@ constexpr auto cbrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
 
   if (n.data == big_int<N, T>{})
     return ZqElement<T, Modulus...>{};
-
-  // Check primality
-  if (!detail::is_prime(std::integer_sequence<T, Modulus...>{}))
-    return std::nullopt;
 
   // For prime p, gcd(3, p - 1) is either 1 (p ≡ 2 mod 3) or 3 (p ≡ 1 mod 3)
   constexpr auto p_mod_3 = div(p, three).remainder[0];

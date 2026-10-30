@@ -144,32 +144,32 @@ TEST_CASE("Modular square root - Tonelli-Shanks")
     static_assert(root->data == to_big_int(2_Z) || root->data == to_big_int(15_Z));
   }
 
-  SECTION("Composite modulus (safety check): mod 15")
-  {
-    // 15 = 3 * 5, not a prime. sqrt should return nullopt.
-    // Even for valid squares like 4 (2^2 = 4), we reject the operation because
-    // Tonelli-Shanks is only for primes.
-    using GF = decltype(Zq(15_Z));
-    constexpr GF four{4};
-
-    auto result = sqrt(four);
-    REQUIRE_FALSE(result.has_value());
-  }
-
-  SECTION("Carmichael number 1729 (safety check)")
-  {
-    // 1729 is a Carmichael number (pseudoprime).
-    // Miller-Rabin should correctly identify it as composite and return nullopt.
-    using GF = decltype(Zq(1729_Z));
-    constexpr GF four{4};
-    // 4 is a square mod 1729 (2^2), but we reject it because 1729 is composite.
-
-    auto result = sqrt(four);
-    REQUIRE_FALSE(result.has_value());
-  }
 }
 
-// Helper for fuzzing
+template<typename E>
+concept has_sqrt = requires(E e) { sqrt(e); };
+
+template<typename E>
+concept has_cbrt = requires(E e) { cbrt(e); };
+
+TEST_CASE("Composite moduli are rejected at compile time")
+{
+  using namespace lam::cbn;
+  using namespace lam::cbn::literals;
+
+  using GF15 = decltype(Zq(15_Z));
+  using GF1729 = decltype(Zq(1729_Z)); // Carmichael number
+  using GF17 = decltype(Zq(17_Z));
+
+  STATIC_REQUIRE_FALSE(has_sqrt<GF15>);
+  STATIC_REQUIRE_FALSE(has_cbrt<GF15>);
+  STATIC_REQUIRE_FALSE(has_sqrt<GF1729>);
+  STATIC_REQUIRE_FALSE(has_cbrt<GF1729>);
+  STATIC_REQUIRE(has_sqrt<GF17>);
+  STATIC_REQUIRE(has_cbrt<GF17>);
+  STATIC_REQUIRE(std::is_same_v<decltype(Fp(17_Z)), GF17>);
+}
+
 template<typename T>
 class Randomizer
 {

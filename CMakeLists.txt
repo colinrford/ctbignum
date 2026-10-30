@@ -28,6 +28,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/LamModule.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Sanitizers.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Warnings.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/LamConstexprLimit.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CtbignumHelpers.cmake)
 
 ## OPTIONS

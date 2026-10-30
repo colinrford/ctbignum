@@ -340,8 +340,6 @@ TEST_CASE("is_quadratic_residue")
 
   SECTION("Non-residues mod 17: 3, 5, 6, 7, 10, 11, 12, 14")
   {
-    using GF = decltype(Zq(17_Z));
-
     // Check residue property
     REQUIRE_FALSE(is_quadratic_residue(GF17{3}));
     REQUIRE_FALSE(is_quadratic_residue(GF17{5}));
@@ -383,7 +381,8 @@ TEST_CASE("Cube root")
     // p = 11 ≡ 2 (mod 3)
     using GF = decltype(Zq(11_Z));
     constexpr GF eight{8};
-    constexpr GF two{2};
+    // TODO: decide whether two is meant to be used
+    [[maybe_unused]] constexpr GF two{2};
     auto result = cbrt(eight);
     REQUIRE(result.has_value());
     // Verify: result^3 = 8
@@ -462,6 +461,10 @@ TEST_CASE("Comprehensive Primes Matrix (Sqrt + Cbrt)", "[roots]")
     auto r_sqrt = sqrt(two); // 3^2=2, 4^2=2
     REQUIRE(r_sqrt.has_value());
     REQUIRE((r_sqrt->data == to_big_int(3_Z) || r_sqrt->data == to_big_int(4_Z)));
+
+    auto r_sqrt4 = sqrt(four); // 2^2=4, 5^2=4
+    REQUIRE(r_sqrt4.has_value());
+    REQUIRE((r_sqrt4->data == to_big_int(2_Z) || r_sqrt4->data == to_big_int(5_Z)));
 
     // cbrt(1) -> 1, 2, 4 (roots of unity)
     // cbrt(6) -> 6

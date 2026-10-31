@@ -19,9 +19,44 @@ find_path(NTL_INCLUDE_DIR NAMES NTL/ZZ.h)
 find_library(NTL_LIBRARIES NAMES ntl)
 find_package(benchmark CONFIG QUIET)
 
-if(GMP_INCLUDE_DIR AND GMP_LIBRARIES
-   AND NTL_INCLUDE_DIR AND NTL_LIBRARIES
-   AND benchmark_FOUND)
+# The config package doesn't say which standard library benchmark was built
+# against; a libc++ build fails to link under GCC/libstdc++, so test a link.
+if(benchmark_FOUND)
+    include(CheckCXXSourceCompiles)
+    block()
+        # try_compile inherits import std and fails without it being relevant here
+        set(CMAKE_CXX_MODULE_STD OFF)
+        set(CMAKE_REQUIRED_LIBRARIES benchmark::benchmark)
+        set(CMAKE_REQUIRED_QUIET ON)
+        check_cxx_source_compiles([=[
+            #include <benchmark/benchmark.h>
+            int main(int argc, char** argv) {
+                benchmark::Initialize(&argc, argv);
+                benchmark::RunSpecifiedBenchmarks();
+            }
+        ]=] CTBIGNUM_BENCHMARK_LINKS)
+    endblock()
+    if(NOT CTBIGNUM_BENCHMARK_LINKS)
+        message(WARNING "google-benchmark at ${benchmark_DIR} doesn't link with "
+            "${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION} (likely built "
+            "against a different standard library).")
+    endif()
+endif()
+
+set(_missing "")
+if(NOT (GMP_INCLUDE_DIR AND GMP_LIBRARIES))
+    list(APPEND _missing GMP)
+endif()
+if(NOT (NTL_INCLUDE_DIR AND NTL_LIBRARIES))
+    list(APPEND _missing NTL)
+endif()
+if(NOT benchmark_FOUND)
+    list(APPEND _missing google-benchmark)
+elseif(NOT CTBIGNUM_BENCHMARK_LINKS)
+    list(APPEND _missing "google-benchmark (doesn't link)")
+endif()
+
+if(NOT _missing)
     find_package(Threads REQUIRED)
 
     set(GMP_INCLUDES ${GMP_INCLUDE_DIR})
@@ -46,5 +81,6 @@ if(GMP_INCLUDE_DIR AND GMP_LIBRARIES
         endif()
     endforeach()
 else()
-    message(STATUS "NTL, GMP or google-benchmark not found. Skipping bench-* benchmarks.")
+    list(JOIN _missing ", " _missing)
+    message(STATUS "Skipping bench-* benchmarks: ${_missing}")
 endif()

@@ -16,6 +16,7 @@ export import :config;
 
 // Core types
 export import :bigint;
+export import :type_traits;
 
 // Utilities
 export import :slicing;
@@ -44,6 +45,7 @@ export import :field;
 // I/O and literals
 export import :io;
 export import :literals;
+export import :decimal_literals;
 
 // Roots (modular square root)
 export import :roots;

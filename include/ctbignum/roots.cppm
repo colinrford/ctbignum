@@ -117,6 +117,7 @@ constexpr bool is_prime(std::integer_sequence<T, Modulus...>)
 
 } // namespace detail
 
+// Probable prime above 3.18e23 (see is_prime), not proven
 export template<typename T, T... Modulus>
 concept prime_modulus = detail::is_prime(std::integer_sequence<T, Modulus...>{});
 

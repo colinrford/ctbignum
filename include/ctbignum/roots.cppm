@@ -70,45 +70,49 @@ constexpr bool is_prime(std::integer_sequence<T, Modulus...>)
   constexpr auto one = big_int<N, T>{1};
   constexpr auto two = big_int<N, T>{2};
 
-  if (n < two)
+  // if constexpr: mod_exp uses Montgomery arithmetic, which can't be
+  // instantiated for an even modulus
+  if constexpr (n < two)
     return false;
-  if (n == two || n == big_int<N, T>{3})
+  else if constexpr (n == two || n == big_int<N, T>{3})
     return true;
-  if ((n[0] & 1) == 0)
+  else if constexpr ((n[0] & 1) == 0)
     return false;
-
-  // n - 1 = d * 2^r
-  auto n_minus_1 = subtract_ignore_carry(n, one);
-  auto [d, r] = factor_out_twos(n_minus_1);
-
-  constexpr unsigned bases[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37};
-
-  for (auto a_val : bases)
+  else
   {
-    auto a = big_int<N, T>{static_cast<T>(a_val)};
-    if (n <= a)
-      break;
+    // n - 1 = d * 2^r
+    auto n_minus_1 = subtract_ignore_carry(n, one);
+    auto [d, r] = factor_out_twos(n_minus_1);
 
-    auto x = mod_exp(a, d, std::integer_sequence<T, Modulus...>{});
+    constexpr unsigned bases[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37};
 
-    if (x == one || x == n_minus_1)
-      continue;
-
-    bool witness_found = false;
-    for (std::size_t i = 1; i < r; ++i)
+    for (auto a_val : bases)
     {
-      x = mod_exp(x, two, std::integer_sequence<T, Modulus...>{});
-      if (x == n_minus_1)
-      {
-        witness_found = true;
+      auto a = big_int<N, T>{static_cast<T>(a_val)};
+      if (n <= a)
         break;
-      }
-    }
 
-    if (!witness_found)
-      return false;
+      auto x = mod_exp(a, d, std::integer_sequence<T, Modulus...>{});
+
+      if (x == one || x == n_minus_1)
+        continue;
+
+      bool witness_found = false;
+      for (std::size_t i = 1; i < r; ++i)
+      {
+        x = mod_exp(x, two, std::integer_sequence<T, Modulus...>{});
+        if (x == n_minus_1)
+        {
+          witness_found = true;
+          break;
+        }
+      }
+
+      if (!witness_found)
+        return false;
+    }
+    return true;
   }
-  return true;
 }
 
 } // namespace detail
@@ -135,8 +139,10 @@ constexpr bool is_quadratic_residue(ZqElement<T, Modulus...> n)
   if (n.data == big_int<sizeof...(Modulus), T>{})
     return true; // 0 is considered a residue (sqrt(0) = 0)
 
-  auto result = mod_exp(n.data, exp, std::integer_sequence<T, Modulus...>{});
-  return result == one;
+  if constexpr (p_minus_1 == one)
+    return true; // p = 2
+  else
+    return mod_exp(n.data, exp, std::integer_sequence<T, Modulus...>{}) == one;
 }
 
 // Tonelli-Shanks algorithm for computing modular square roots
@@ -153,22 +159,27 @@ constexpr auto sqrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
   if (n.data == big_int<N, T>{})
     return ZqElement<T, Modulus...>{};
 
-  if (!is_quadratic_residue(n))
-    return std::nullopt;
   // Factor p - 1 = Q * 2^S
   constexpr auto QS = detail::factor_out_twos(p_minus_1);
   constexpr auto Q = QS.first;
   constexpr std::size_t S = QS.second;
-  // Special case: p ≡ 3 (mod 4), i.e., S == 1
-  // sqrt(n) = n^((p + 1) / 4)
-  if constexpr (S == 1)
-  {
+  if constexpr (S == 0)
+  { // p = 2: x^2 = x; Montgomery arithmetic in mod_exp needs an odd modulus
+    return n;
+  }
+  else if constexpr (S == 1)
+  { // p ≡ 3 (mod 4): sqrt(n) = n^((p + 1) / 4)
+    if (!is_quadratic_residue(n))
+      return std::nullopt;
     constexpr auto exp = shift_right(add_ignore_carry(p, one), 2);
     auto result = mod_exp(n.data, exp, std::integer_sequence<T, Modulus...>{});
     return ZqElement<T, Modulus...>{result};
   }
   else
-  { // Find a quadratic non-residue z
+  {
+    if (!is_quadratic_residue(n))
+      return std::nullopt;
+    // Find a quadratic non-residue z
     constexpr auto neg_one = subtract_ignore_carry(p, one);
     constexpr auto legendre_exp = shift_right(p_minus_1, 1);
     big_int<N, T> z{2};
@@ -223,8 +234,8 @@ constexpr auto cbrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
   // For prime p, gcd(3, p - 1) is either 1 (p = 3 or p ≡ 2 mod 3) or 3 (p ≡ 1 mod 3)
   constexpr auto p_mod_3 = div(p, three).remainder[0];
 
-  if constexpr (p_mod_3 == 0)
-  { // p = 3: x^3 = x for every x
+  if constexpr (p_mod_3 == 0 || p == two)
+  { // p = 2 or 3: x^3 = x for every x
     return n;
   }
   else if constexpr (p_mod_3 == 2)
@@ -331,7 +342,7 @@ constexpr auto cbrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
 }
 
 // Runtime-modulus overloads: instantiated once per limb count N, not once per modulus.
-// Precondition for all of them: p is an odd prime.
+// Precondition for all of them: p is prime.
 
 export template<std::size_t N, typename T>
 constexpr bool is_quadratic_residue(big_int<N, T> value, big_int<N, T> p)
@@ -340,7 +351,8 @@ constexpr bool is_quadratic_residue(big_int<N, T> value, big_int<N, T> p)
   auto p_minus_1 = subtract_ignore_carry(p, one);
   auto exp = shift_right(p_minus_1, 1); // (p - 1) / 2
 
-  if (value == big_int<N, T>{})
+  value = mod(value, p);
+  if (value == big_int<N, T>{} || p_minus_1 == one)
     return true;
 
   auto result = mod_exp(value, exp, p);
@@ -355,8 +367,10 @@ constexpr auto sqrt(big_int<N, T> value, big_int<N, T> p) -> std::optional<big_i
   auto two = big_int<N, T>{2};
   auto p_minus_1 = subtract_ignore_carry(p, one);
 
-  if (value == big_int<N, T>{})
-    return big_int<N, T>{};
+  value = mod(value, p);
+  // p = 2: x^2 = x; Montgomery arithmetic in mod_exp needs an odd modulus
+  if (value == big_int<N, T>{} || p == two)
+    return value;
 
   if (!is_quadratic_residue(value, p))
     return std::nullopt;
@@ -410,13 +424,14 @@ constexpr auto cbrt(big_int<N, T> value, big_int<N, T> p) -> std::optional<big_i
   auto three = big_int<N, T>{3};
   auto p_minus_1 = subtract_ignore_carry(p, one);
 
+  value = mod(value, p);
   if (value == big_int<N, T>{})
-    return big_int<N, T>{};
+    return value;
 
   auto p_mod_3 = div(p, three).remainder[0];
 
-  // p = 3: x^3 = x for every x
-  if (p_mod_3 == 0)
+  // p = 2 or 3: x^3 = x for every x
+  if (p_mod_3 == 0 || p == two)
     return value;
 
   if (p_mod_3 == 2)

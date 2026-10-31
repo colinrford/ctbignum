@@ -25,7 +25,8 @@ public:
   }
 
 private:
-  std::mt19937 generator{std::random_device{}()};
+  // Catch's seed: fixed by default so failures reproduce; vary it with --rng-seed
+  std::mt19937 generator{Catch::rngSeed()};
   std::uniform_int_distribution<T> distribution;
 };
 
@@ -91,6 +92,22 @@ TEST_CASE("Cross-validate: NTTP sqrt vs runtime sqrt")
     }
   }
 
+  SECTION("p = 2 (x^2 = x)")
+  {
+    constexpr auto p_seq = 2_Z;
+    constexpr auto p = to_big_int(p_seq);
+    using GF = decltype(Zq(p_seq));
+
+    REQUIRE(is_quadratic_residue(GF{1}));
+    REQUIRE(is_quadratic_residue(big_int<1, std::uint64_t>{1}, p));
+    auto nttp_result = sqrt(GF{1});
+    auto rt_result = sqrt(big_int<1, std::uint64_t>{1}, p);
+    REQUIRE(nttp_result.has_value());
+    REQUIRE(rt_result.has_value());
+    REQUIRE(nttp_result->data == big_int<1, std::uint64_t>{1});
+    REQUIRE(*rt_result == nttp_result->data);
+  }
+
   SECTION("Fermat prime 65537 (high 2-valuation)")
   {
     constexpr auto p_seq = 65537_Z;
@@ -143,6 +160,20 @@ TEST_CASE("Cross-validate: NTTP cbrt vs runtime cbrt")
 {
   using namespace lam::cbn;
   using namespace lam::cbn::literals;
+
+  SECTION("p = 2 (x^3 = x)")
+  {
+    constexpr auto p_seq = 2_Z;
+    constexpr auto p = to_big_int(p_seq);
+    using GF = decltype(Zq(p_seq));
+
+    auto nttp_result = cbrt(GF{1});
+    auto rt_result = cbrt(big_int<1, std::uint64_t>{1}, p);
+    REQUIRE(nttp_result.has_value());
+    REQUIRE(rt_result.has_value());
+    REQUIRE(nttp_result->data == big_int<1, std::uint64_t>{1});
+    REQUIRE(*rt_result == nttp_result->data);
+  }
 
   SECTION("p = 3 (x^3 = x)")
   {
@@ -443,6 +474,25 @@ TEST_CASE("Runtime sqrt/cbrt edge cases")
     auto result = sqrt(one, p);
     REQUIRE(result.has_value());
     REQUIRE(*result == one);
+  }
+
+  SECTION("Values >= p are reduced first")
+  {
+    auto p = to_big_int(17_Z);
+    auto four_plus_p = big_int<1, std::uint64_t>{4 + 17};
+    REQUIRE(is_quadratic_residue(four_plus_p, p));
+    REQUIRE_FALSE(is_quadratic_residue(big_int<1, std::uint64_t>{3 + 17}, p));
+    auto root = sqrt(four_plus_p, p);
+    REQUIRE(root.has_value());
+    REQUIRE(mod(mul(*root, *root), p) == big_int<1, std::uint64_t>{4});
+    REQUIRE(*sqrt(p, p) == big_int<1, std::uint64_t>{});
+
+    auto q = to_big_int(11_Z);
+    auto eight_plus_q = big_int<1, std::uint64_t>{8 + 11};
+    auto croot = cbrt(eight_plus_q, q);
+    REQUIRE(croot.has_value());
+    REQUIRE(mod(mul(mod(mul(*croot, *croot), q), *croot), q) == big_int<1, std::uint64_t>{8});
+    REQUIRE(*cbrt(q, q) == big_int<1, std::uint64_t>{});
   }
 
   SECTION("cbrt(0) = 0")

@@ -159,12 +159,18 @@ TEST_CASE("Composite moduli are rejected at compile time")
 
   using GF15 = decltype(Zq(15_Z));
   using GF1729 = decltype(Zq(1729_Z)); // Carmichael number
+  using GF16 = decltype(Zq(16_Z));
+  using GF2 = decltype(Zq(2_Z));
   using GF17 = decltype(Zq(17_Z));
 
   STATIC_REQUIRE_FALSE(has_sqrt<GF15>);
   STATIC_REQUIRE_FALSE(has_cbrt<GF15>);
   STATIC_REQUIRE_FALSE(has_sqrt<GF1729>);
   STATIC_REQUIRE_FALSE(has_cbrt<GF1729>);
+  STATIC_REQUIRE_FALSE(has_sqrt<GF16>);
+  STATIC_REQUIRE_FALSE(has_cbrt<GF16>);
+  STATIC_REQUIRE(has_sqrt<GF2>);
+  STATIC_REQUIRE(has_cbrt<GF2>);
   STATIC_REQUIRE(has_sqrt<GF17>);
   STATIC_REQUIRE(has_cbrt<GF17>);
   STATIC_REQUIRE(std::is_same_v<decltype(Fp(17_Z)), GF17>);
@@ -182,7 +188,8 @@ public:
   }
 
 private:
-  std::mt19937 generator{std::random_device{}()};
+  // Catch's seed: fixed by default so failures reproduce; vary it with --rng-seed
+  std::mt19937 generator{Catch::rngSeed()};
   std::uniform_int_distribution<T> distribution;
 };
 

@@ -1,0 +1,118 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  clang:
+    name: clang 23 / libc++ (${{ matrix.build_type }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Debug, Release]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install LLVM 23
+        run: |
+          wget -qO llvm.sh https://apt.llvm.org/llvm.sh
+          sudo bash llvm.sh 23
+          sudo apt-get install -y libc++-23-dev libc++abi-23-dev ninja-build
+
+      # LamCxxModuleStd.cmake maps CMake versions to import-std UUIDs; stay on a mapped one
+      - name: Install CMake 4.4
+        run: pip install "cmake==4.4.*"
+
+      # No LAM_WARNINGS_AS_ERRORS: the std module is compiled with the library's
+      # flags, and libc++'s std.cppm trips -Wreserved-module-identifier
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DCMAKE_CXX_COMPILER=clang++-23
+          -DCMAKE_CXX_FLAGS=-stdlib=libc++
+          -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  gcc:
+    name: gcc 16 / libstdc++ (${{ matrix.build_type }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Debug, Release]
+    container: gcc:16
+    steps:
+      - uses: actions/checkout@v7
+
+      # NTL, GMP and google-benchmark from Debian are libstdc++ builds, so
+      # unit-modinv and the bench-* targets build here (not in the clang job)
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y ninja-build python3-venv libgmp-dev libntl-dev libbenchmark-dev
+          python3 -m venv /opt/cmake
+          /opt/cmake/bin/pip install "cmake==4.4.*"
+          echo /opt/cmake/bin >> "$GITHUB_PATH"
+
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DCMAKE_CXX_COMPILER=g++
+          -DLAM_WARNINGS_AS_ERRORS=ON
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  macos:
+    name: macOS arm64 / Homebrew LLVM libc++ (Release)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v7
+
+      # NTL, GMP and google-benchmark bottles are libc++ builds, so unit-modinv
+      # and the bench-* targets build and run here
+      - name: Install LLVM, CMake 4.4, Ninja and benchmark dependencies
+        run: |
+          brew install llvm ninja google-benchmark ntl gmp
+          python3 -m venv "$RUNNER_TEMP/cmake"
+          "$RUNNER_TEMP/cmake/bin/pip" install "cmake==4.4.*"
+          echo "$RUNNER_TEMP/cmake/bin" >> "$GITHUB_PATH"
+
+      # Homebrew's libc++ instead of the SDK's, as in bitvector's CI and the local homebrew_llvm toolchain
+      - name: Configure
+        run: |
+          llvm_prefix="$(brew --prefix llvm)"
+          modules_json="$llvm_prefix/lib/c++/libc++.modules.json"
+          test -f "$modules_json"
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$(brew --prefix)" \
+            -DCMAKE_CXX_COMPILER="$llvm_prefix/bin/clang++" \
+            -DCMAKE_OSX_SYSROOT="$(xcrun --show-sdk-path)" \
+            -DCMAKE_CXX_STDLIB_MODULES_JSON="$modules_json" \
+            -DCMAKE_CXX_FLAGS="-stdlib=libc++ -nostdinc++ -isystem $llvm_prefix/include/c++/v1" \
+            -DCMAKE_EXE_LINKER_FLAGS="-L$llvm_prefix/lib/c++ -L$llvm_prefix/lib/unwind -lunwind" \
+            -DCMAKE_BUILD_RPATH="$llvm_prefix/lib/c++;$llvm_prefix/lib/unwind"
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure --no-tests=error

@@ -1,0 +1,72 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  clang:
+    name: clang 23 / libc++
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install LLVM 23
+        run: |
+          wget -qO llvm.sh https://apt.llvm.org/llvm.sh
+          sudo bash llvm.sh 23
+          sudo apt-get install -y libc++-23-dev libc++abi-23-dev ninja-build
+
+      # LamCxxModuleStd.cmake maps CMake versions to import-std UUIDs; stay on a mapped one
+      - name: Install CMake 4.4
+        run: pip install "cmake==4.4.*"
+
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_CXX_COMPILER=clang++-23
+          -DCMAKE_CXX_FLAGS=-stdlib=libc++
+          -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++
+          -DLAM_WARNINGS_AS_ERRORS=ON
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  gcc:
+    name: gcc 16 / libstdc++
+    runs-on: ubuntu-24.04
+    container: gcc:16
+    steps:
+      - uses: actions/checkout@v4
+
+      # NTL, GMP and google-benchmark from Debian are libstdc++ builds, so
+      # unit-modinv and the bench-* targets build here (not in the clang job)
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y ninja-build python3-venv libgmp-dev libntl-dev libbenchmark-dev
+          python3 -m venv /opt/cmake
+          /opt/cmake/bin/pip install "cmake==4.4.*"
+          echo /opt/cmake/bin >> "$GITHUB_PATH"
+
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_CXX_COMPILER=g++
+          -DLAM_WARNINGS_AS_ERRORS=ON
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure

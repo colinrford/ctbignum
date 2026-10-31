@@ -220,10 +220,14 @@ constexpr auto cbrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
   if (n.data == big_int<N, T>{})
     return ZqElement<T, Modulus...>{};
 
-  // For prime p, gcd(3, p - 1) is either 1 (p ≡ 2 mod 3) or 3 (p ≡ 1 mod 3)
+  // For prime p, gcd(3, p - 1) is either 1 (p = 3 or p ≡ 2 mod 3) or 3 (p ≡ 1 mod 3)
   constexpr auto p_mod_3 = div(p, three).remainder[0];
 
-  if constexpr (p_mod_3 == 2)
+  if constexpr (p_mod_3 == 0)
+  { // p = 3: x^3 = x for every x
+    return n;
+  }
+  else if constexpr (p_mod_3 == 2)
   { // p ≡ 2 (mod 3): every element is a cubic residue, unique cube root
     // cbrt(n) = n^((2p - 1) / 3) = n^(2k + 1) with p = 3k + 2; avoids computing 2p
     constexpr auto k = div(subtract_ignore_carry(p, two), three).quotient;
@@ -324,6 +328,186 @@ constexpr auto cbrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
 
     return ZqElement<T, Modulus...>{x};
   }
+}
+
+// Runtime-modulus overloads: instantiated once per limb count N, not once per modulus.
+// Precondition for all of them: p is an odd prime.
+
+export template<std::size_t N, typename T>
+constexpr bool is_quadratic_residue(big_int<N, T> value, big_int<N, T> p)
+{
+  auto one = big_int<N, T>{1};
+  auto p_minus_1 = subtract_ignore_carry(p, one);
+  auto exp = shift_right(p_minus_1, 1); // (p - 1) / 2
+
+  if (value == big_int<N, T>{})
+    return true;
+
+  auto result = mod_exp(value, exp, p);
+  return result == one;
+}
+
+// Tonelli-Shanks with runtime modulus
+export template<std::size_t N, typename T>
+constexpr auto sqrt(big_int<N, T> value, big_int<N, T> p) -> std::optional<big_int<N, T>>
+{
+  auto one = big_int<N, T>{1};
+  auto two = big_int<N, T>{2};
+  auto p_minus_1 = subtract_ignore_carry(p, one);
+
+  if (value == big_int<N, T>{})
+    return big_int<N, T>{};
+
+  if (!is_quadratic_residue(value, p))
+    return std::nullopt;
+
+  auto [Q, S] = detail::factor_out_twos(p_minus_1);
+
+  if (S == 1)
+  {
+    auto exp = shift_right(add_ignore_carry(p, one), 2);
+    return mod_exp(value, exp, p);
+  }
+
+  auto neg_one = p_minus_1;
+  auto legendre_exp = shift_right(p_minus_1, 1);
+  big_int<N, T> z{2};
+  while (mod_exp(z, legendre_exp, p) != neg_one)
+    z = add_ignore_carry(z, one);
+
+  std::size_t M = S;
+  auto c = mod_exp(z, Q, p);
+  auto t = mod_exp(value, Q, p);
+  auto Q_plus_1_div_2 = shift_right(add_ignore_carry(Q, one), 1);
+  auto R = mod_exp(value, Q_plus_1_div_2, p);
+
+  while (t != one)
+  {
+    std::size_t i = 1;
+    auto temp = mod_exp(t, two, p);
+    while (temp != one && i < M)
+    {
+      temp = mod_exp(temp, two, p);
+      ++i;
+    }
+    auto b = c;
+    for (std::size_t j = 0; j < M - i - 1; ++j)
+      b = mod_exp(b, two, p);
+    M = i;
+    c = mod_exp(b, two, p);
+    t = mod(mul(t, c), p);
+    R = mod(mul(R, b), p);
+  }
+  return R;
+}
+
+// Adleman-Manders-Miller cube root with runtime modulus
+export template<std::size_t N, typename T>
+constexpr auto cbrt(big_int<N, T> value, big_int<N, T> p) -> std::optional<big_int<N, T>>
+{
+  auto one = big_int<N, T>{1};
+  auto two = big_int<N, T>{2};
+  auto three = big_int<N, T>{3};
+  auto p_minus_1 = subtract_ignore_carry(p, one);
+
+  if (value == big_int<N, T>{})
+    return big_int<N, T>{};
+
+  auto p_mod_3 = div(p, three).remainder[0];
+
+  // p = 3: x^3 = x for every x
+  if (p_mod_3 == 0)
+    return value;
+
+  if (p_mod_3 == 2)
+  {
+    // p ≡ 2 (mod 3): every element is a cubic residue, unique cube root
+    // exponent (2p - 1) / 3 = 2k + 1 with p = 3k + 2; avoids computing 2p
+    auto k = div(subtract_ignore_carry(p, two), three).quotient;
+    auto exp = add_ignore_carry(add_ignore_carry(k, k), one);
+    return mod_exp(value, exp, p);
+  }
+
+  // p ≡ 1 (mod 3): Adleman-Manders-Miller
+  auto residue_exp = div(p_minus_1, three).quotient;
+  if (mod_exp(value, residue_exp, p) != one)
+    return std::nullopt;
+
+  // p - 1 = 3^S * t with 3 not dividing t
+  auto [t, S] = detail::factor_out_val(p_minus_1, static_cast<T>(3));
+
+  // k = 1/3 mod t
+  auto t_rem_3 = div(t, three).remainder;
+  auto k = t;
+  if (t_rem_3 == big_int<N, T>{1})
+  {
+    auto two_t_full = mul(two, t);
+    big_int<N, T> two_t;
+    for (std::size_t i = 0; i < N; ++i)
+      two_t[i] = two_t_full[i];
+
+    auto num = add_ignore_carry(one, two_t);
+    k = div(num, three).quotient;
+  }
+  else
+  {
+    auto num = add_ignore_carry(one, t);
+    k = div(num, three).quotient;
+  }
+
+  // cubic non-residue z: z^((p - 1) / 3) != 1
+  auto z = two;
+  while (true)
+  {
+    if (mod_exp(z, residue_exp, p) != one)
+      break;
+    z = add_ignore_carry(z, one);
+  }
+
+  auto c = mod_exp(z, t, p);
+  auto r = mod_exp(value, k, p);
+  auto n_inv = mod_inv(value, p);
+
+  auto h = r;
+  auto h_cubed = mod_exp(h, three, p);
+  auto b = mod(mul(n_inv, h_cubed), p);
+
+  auto x = r;
+  auto g = c;
+  auto r_val = S;
+  auto b_term = b;
+
+  std::size_t safety_counter = 0;
+  while (b_term != one)
+  {
+    if (++safety_counter > S + 10)
+      return std::nullopt;
+
+    auto temp = b_term;
+    std::size_t m = 0;
+    for (; m < r_val; ++m)
+    {
+      if (temp == one)
+        break;
+      temp = mod_exp(temp, three, p);
+    }
+
+    if (m == r_val)
+      return std::nullopt;
+
+    auto g2 = g;
+    for (std::size_t j = 0; j < r_val - m - 1; ++j)
+      g2 = mod_exp(g2, three, p);
+
+    g = g2;
+
+    x = mod(mul(x, g), p);
+    g = mod_exp(g, three, p);
+    b_term = mod(mul(b_term, g), p);
+    r_val = m;
+  }
+
+  return x;
 }
 
 } // namespace lam::cbn

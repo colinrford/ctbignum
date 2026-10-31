@@ -47,7 +47,7 @@ struct ZqElement
   }
 
   big_int<sizeof...(Modulus), T> data;
-  explicit operator auto() const { return data; } // allow casting to big_int
+  explicit constexpr operator big_int<sizeof...(Modulus), T>() const { return data; }
   constexpr ZqElement() : data() {}
 
   // export template <typename U, typename = std::enable_if<std::is_integral_v<U> && std::is_unsigned_v<U>>>

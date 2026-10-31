@@ -79,6 +79,13 @@ if(NOT _missing)
         if(file_basename MATCHES "roots")
             lam_target_constexpr_limit(${benchmark_name} CLANG 5000000 GCC 50000000)
         endif()
+
+        # smoke test: checks the benchmark runs; the timings mean nothing
+        add_test(NAME ${benchmark_name}_smoke
+            COMMAND ${benchmark_name} --benchmark_min_time=0.01s)
+        set_tests_properties(${benchmark_name}_smoke PROPERTIES
+            LABELS "benchmark"
+            TIMEOUT 300)
     endforeach()
 else()
     list(JOIN _missing ", " _missing)

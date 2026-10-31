@@ -22,22 +22,22 @@ struct dbl_bitlen
 {
   using type = void;
 };
-export template<>
+template<>
 struct dbl_bitlen<std::uint8_t>
 {
   using type = std::uint16_t;
 };
-export template<>
+template<>
 struct dbl_bitlen<std::uint16_t>
 {
   using type = std::uint32_t;
 };
-export template<>
+template<>
 struct dbl_bitlen<std::uint32_t>
 {
   using type = std::uint64_t;
 };
-export template<>
+template<>
 struct dbl_bitlen<std::uint64_t>
 {
   using type = lam::ctbignum::config::uint128_or_void;

@@ -92,7 +92,6 @@ TEST_CASE("Modular square root - Tonelli-Shanks")
     constexpr auto p25519 = 57896044618658097711785492504343953926634992332820282019728792003956564819949_Z;
     using GF = decltype(Zq(p25519));
 
-    // Test sqrt(4) = ±2
     constexpr GF four{4};
     constexpr GF two{2};
     constexpr GF neg_two{-2};
@@ -101,7 +100,6 @@ TEST_CASE("Modular square root - Tonelli-Shanks")
     REQUIRE(result.has_value());
     REQUIRE((result->data == two.data || result->data == neg_two.data));
 
-    // Verify by squaring
     auto squared = (*result) * (*result);
     REQUIRE(squared.data == four.data);
   }
@@ -112,34 +110,26 @@ TEST_CASE("Modular square root - Tonelli-Shanks")
     constexpr auto secp256k1_p = 115792089237316195423570985008687907853269984665640564039457584007908834671663_Z;
     using GF = decltype(Zq(secp256k1_p));
 
-    // sqrt(4) = 2 (Trivial check)
     constexpr GF four{4};
     constexpr GF two{2};
     auto result = sqrt(four);
     REQUIRE(result.has_value());
     REQUIRE((result->data == two.data || result->data == (GF{0} - two).data));
 
-    // Non-trivial check: Pick a large number, square it, then take sqrt
-    // Let's us a large arbitrary number < p
-    // 2^200 + 12345
-    constexpr auto large_val = 1606938044258990275541962092341162602522202993782792835301376_Z; // approx 2^200
+    // 2^200
+    constexpr auto large_val = 1606938044258990275541962092341162602522202993782792835301376_Z;
     constexpr GF large_elem{large_val};
 
-    // Calculate square: s = x^2
     constexpr auto square = large_elem * large_elem;
 
-    // Recover root: r = sqrt(s)
     auto root = sqrt(square);
     REQUIRE(root.has_value());
 
-    // Check: r == x OR r == -x
-    // Note: -x in field is (0 - x)
     constexpr GF neg_large_elem = GF{0} - large_elem;
 
     bool correct_root = (root->data == large_elem.data) || (root->data == neg_large_elem.data);
     REQUIRE(correct_root);
 
-    // Verify square property explicitly
     REQUIRE(((*root) * (*root)).data == square.data);
   }
 
@@ -147,7 +137,6 @@ TEST_CASE("Modular square root - Tonelli-Shanks")
   {
     using GF = decltype(Zq(17_Z));
 
-    // This MUST compile if sqrt is truly constexpr
     constexpr GF four{4};
     constexpr auto root = sqrt(four);
 
@@ -155,32 +144,38 @@ TEST_CASE("Modular square root - Tonelli-Shanks")
     static_assert(root->data == to_big_int(2_Z) || root->data == to_big_int(15_Z));
   }
 
-  SECTION("Composite modulus (safety check): mod 15")
-  {
-    // 15 = 3 * 5, not a prime. sqrt should return nullopt.
-    // Even for valid squares like 4 (2^2 = 4), we reject the operation because
-    // Tonelli-Shanks is only for primes.
-    using GF = decltype(Zq(15_Z));
-    constexpr GF four{4};
-
-    auto result = sqrt(four);
-    REQUIRE_FALSE(result.has_value());
-  }
-
-  SECTION("Carmichael number 1729 (safety check)")
-  {
-    // 1729 is a Carmichael number (pseudoprime).
-    // Miller-Rabin should correctly identify it as composite and return nullopt.
-    using GF = decltype(Zq(1729_Z));
-    constexpr GF four{4};
-    // 4 is a square mod 1729 (2^2), but we reject it because 1729 is composite.
-
-    auto result = sqrt(four);
-    REQUIRE_FALSE(result.has_value());
-  }
 }
 
-// Helper for fuzzing
+template<typename E>
+concept has_sqrt = requires(E e) { sqrt(e); };
+
+template<typename E>
+concept has_cbrt = requires(E e) { cbrt(e); };
+
+TEST_CASE("Composite moduli are rejected at compile time")
+{
+  using namespace lam::cbn;
+  using namespace lam::cbn::literals;
+
+  using GF15 = decltype(Zq(15_Z));
+  using GF1729 = decltype(Zq(1729_Z)); // Carmichael number
+  using GF16 = decltype(Zq(16_Z));
+  using GF2 = decltype(Zq(2_Z));
+  using GF17 = decltype(Zq(17_Z));
+
+  STATIC_REQUIRE_FALSE(has_sqrt<GF15>);
+  STATIC_REQUIRE_FALSE(has_cbrt<GF15>);
+  STATIC_REQUIRE_FALSE(has_sqrt<GF1729>);
+  STATIC_REQUIRE_FALSE(has_cbrt<GF1729>);
+  STATIC_REQUIRE_FALSE(has_sqrt<GF16>);
+  STATIC_REQUIRE_FALSE(has_cbrt<GF16>);
+  STATIC_REQUIRE(has_sqrt<GF2>);
+  STATIC_REQUIRE(has_cbrt<GF2>);
+  STATIC_REQUIRE(has_sqrt<GF17>);
+  STATIC_REQUIRE(has_cbrt<GF17>);
+  STATIC_REQUIRE(std::is_same_v<decltype(Fp(17_Z)), GF17>);
+}
+
 template<typename T>
 class Randomizer
 {
@@ -193,7 +188,8 @@ public:
   }
 
 private:
-  std::mt19937 generator{std::random_device{}()};
+  // Catch's seed: fixed by default so failures reproduce; vary it with --rng-seed
+  std::mt19937 generator{Catch::rngSeed()};
   std::uniform_int_distribution<T> distribution;
 };
 
@@ -204,17 +200,14 @@ TEST_CASE("Stress Tests and Edge Cases")
 
   SECTION("High valuation of 2: p = 65537 (2^16 + 1)")
   {
-    // 65537 is F4. p-1 = 2^16. S = 16.
-    // This exercises the Tonelli-Shanks loop depth.
+    // p - 1 = 2^16, so S = 16: the deepest Tonelli-Shanks loop here
     using GF = decltype(Zq(65537_Z));
 
-    // 3 is a primitive root mod 65537. 3^2 = 9.
     constexpr GF nine{9};
     auto result = sqrt(nine);
     REQUIRE(result.has_value());
     REQUIRE((result->data == to_big_int(3_Z) || result->data == (to_big_int(65537_Z) - to_big_int(3_Z))));
 
-    // Check various powers
     constexpr GF val{123};
     auto sq = val * val;
     auto root = sqrt(sq);
@@ -231,24 +224,19 @@ TEST_CASE("Stress Tests and Edge Cases")
     Randomizer<uint64_t> randomizer;
     big_int<4, uint64_t> rand_data;
 
-    // Run 50 random iterations
     for (int i = 0; i < 50; ++i)
     {
-      // Generate random valid field element
       do
       {
         randomizer(rand_data);
-      } while (rand_data >= p_val); // Ensure < p
+      } while (rand_data >= p_val);
 
       GF r{rand_data};
 
-      // Square it
       auto sq = r * r;
 
-      // Compute sqrt
       auto root = sqrt(sq);
 
-      // Verify
       REQUIRE(root.has_value());
       auto root_sq = (*root) * (*root);
       REQUIRE(root_sq.data == sq.data);
@@ -261,10 +249,7 @@ TEST_CASE("Stress Tests and Edge Cases")
 
   SECTION("Cube Root Fuzzing on secp256k1 (p = 1 mod 3 - Hard Case)")
   {
-    // secp256k1 p is = 1 mod 3.
-    // This means only 1/3 of elements have cube roots.
-    // And there are 3 cube roots for any cubic residue.
-
+    // secp256k1 p ≡ 1 (mod 3): a third of the nonzero elements are cubes, each with 3 cube roots
     constexpr auto p_seq = 115792089237316195423570985008687907853269984665640564039457584007908834671663_Z;
     using GF = decltype(Zq(p_seq));
     constexpr auto p_val = to_big_int(p_seq);
@@ -274,23 +259,19 @@ TEST_CASE("Stress Tests and Edge Cases")
 
     for (int i = 0; i < 50; ++i)
     {
-      // 1. Generate valid random r
       do
       {
         randomizer(rand_data);
       } while (rand_data >= p_val);
       GF r{rand_data};
 
-      // 2. Compute cubic residue x = r^3
       auto x = r * r * r;
-      // 3. Verify cbrt(x) finds a root
       auto root = cbrt(x);
       REQUIRE(root.has_value());
-      // Verify root^3 == x
       auto val = *root;
       auto cubed = val * val * val;
       REQUIRE(cubed.data == x.data);
-      // 4. Test random element (likely non-residue)
+      // random element, a non-residue with probability 2/3
       do
       {
         randomizer(rand_data);
@@ -306,7 +287,6 @@ TEST_CASE("Stress Tests and Edge Cases")
 
       else
       {
-        // Verify it was correctly rejected (Euler criterion for cubes)
         // z^((p - 1) / 3) != 1
         constexpr auto one = big_int<4, uint64_t>{1};
         constexpr auto three = big_int<4, uint64_t>{3};
@@ -340,11 +320,9 @@ TEST_CASE("is_quadratic_residue")
 
   SECTION("Non-residues mod 17: 3, 5, 6, 7, 10, 11, 12, 14")
   {
-    // Check residue property
     REQUIRE_FALSE(is_quadratic_residue(GF17{3}));
     REQUIRE_FALSE(is_quadratic_residue(GF17{5}));
 
-    // Check safe failure (returns nullopt)
     REQUIRE_FALSE(sqrt(GF17{3}).has_value());
     REQUIRE_FALSE(sqrt(GF17{5}).has_value());
     REQUIRE_FALSE(sqrt(GF17{6}).has_value());
@@ -355,6 +333,35 @@ TEST_CASE("Cube root")
 {
   using namespace lam::cbn;
   using namespace lam::cbn::literals;
+
+  // Two-limb primes where p mod 3 differs from the low limb mod 3, and one
+  // with the top bit set so that 2p overflows two limbs.
+  SECTION("Two-limb p ≡ 2 (mod 3), low limb ≡ 1 (mod 3)")
+  {
+    using GF = decltype(Zq(1267650600228229401496703205653_Z));
+    constexpr GF x{125};
+    auto root = cbrt(x);
+    REQUIRE(root.has_value());
+    REQUIRE(*root == GF{5});
+  }
+
+  SECTION("Two-limb p ≡ 1 (mod 3), low limb ≡ 2 (mod 3)")
+  {
+    using GF = decltype(Zq(2535301200456458802993406410901_Z));
+    constexpr GF x{125};
+    auto root = cbrt(x);
+    REQUIRE(root.has_value());
+    REQUIRE((*root) * (*root) * (*root) == x);
+  }
+
+  SECTION("128-bit p ≡ 2 (mod 3) with top bit set")
+  {
+    using GF = decltype(Zq(170141183460469231750134047789593657433_Z));
+    constexpr GF x{125};
+    auto root = cbrt(x);
+    REQUIRE(root.has_value());
+    REQUIRE(*root == GF{5});
+  }
 
   SECTION("cbrt(0) = 0")
   {
@@ -390,30 +397,19 @@ TEST_CASE("Cube root")
     REQUIRE(cubed.data == eight.data);
   }
 
-  SECTION("Composite modulus (safety check): mod 15")
-  {
-    using GF = decltype(Zq(15_Z));
-    constexpr GF one{1};
-    auto result = cbrt(one);
-    REQUIRE_FALSE(result.has_value());
-  }
-
   SECTION("Compile-Time Execution (constexpr)")
   {
-    // Test trivial case
-    using GF = decltype(Zq(5_Z)); // p=5 (2 mod 3) -> Unique roots
+    using GF = decltype(Zq(5_Z)); // 5 ≡ 2 (mod 3): unique cube roots
     constexpr GF two{2};
-    // 2^3 = 8 = 3 (mod 5). So cbrt(3) = 2.
-    // 3^3 = 27 = 2 (mod 5). So cbrt(2) = 3.
+    // 3^3 = 27 ≡ 2 (mod 5)
     constexpr auto res = cbrt(two);
     static_assert(res.has_value());
     constexpr GF three{3};
     static_assert(res->data == three.data);
 
-    // Test AMM case (p=7, 1 mod 3)
+    // 7 ≡ 1 (mod 3): Adleman-Manders-Miller
     using GF7 = decltype(Zq(7_Z));
     constexpr GF7 six{6}; // -1
-    // (-1)^3 = -1. So cbrt(6) should be 6.
     constexpr auto res_amm = cbrt(six);
     static_assert(res_amm.has_value());
     static_assert(res_amm->data == six.data);
@@ -510,7 +506,7 @@ TEST_CASE("Comprehensive Primes Matrix (Sqrt + Cbrt)", "[roots]")
     static_assert(c_cbrt->data == to_big_int(7_Z));
   }
 
-  // 13 (1 mod 4, 1 mod 3) - HARD CASE (TS + AMM)
+  // 13 (1 mod 4, 1 mod 3)
   SECTION("Prime 13: Sqrt(TS) + Cbrt(AMM)")
   {
     using GF = decltype(Zq(13_Z));

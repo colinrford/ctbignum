@@ -43,9 +43,9 @@ constexpr auto montgomery_reduction(big_int<N1, T> A, std::integer_sequence<T, M
   using detail::unary_encoding;
   using std::integer_sequence;
 
-  constexpr auto m = big_int<N2, T>{Modulus...};
-  constexpr auto inv = mod_inv(integer_sequence<T, Modulus...>{}, integer_sequence<T, 0, 1>{}); // m^{-1} mod 2^64
-  constexpr T mprime = -inv[0];
+  static constexpr auto m = big_int<N2, T>{Modulus...};
+  static constexpr auto inv = mod_inv(integer_sequence<T, Modulus...>{}, integer_sequence<T, 0, 1>{}); // m^{-1} mod 2^64
+  static constexpr T mprime = -inv[0];
 
   auto accum = pad<1>(A);
 
@@ -75,9 +75,9 @@ constexpr auto montgomery_mul(big_int<N, T> x, big_int<N, T> y, std::integer_seq
 
   using TT = typename dbl_bitlen<T>::type;
 
-  constexpr auto m = big_int<N, T>{Modulus...};
-  constexpr auto inv = mod_inv(integer_sequence<T, Modulus...>{}, integer_sequence<T, 0, 1>{}); // m^{-1} mod 2^64
-  constexpr T mprime = -inv[0];
+  static constexpr auto m = big_int<N, T>{Modulus...};
+  static constexpr auto inv = mod_inv(integer_sequence<T, Modulus...>{}, integer_sequence<T, 0, 1>{}); // m^{-1} mod 2^64
+  static constexpr T mprime = -inv[0];
 
   big_int<N + 1, T> A{};
   for (std::size_t i = 0; i < N; ++i)

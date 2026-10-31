@@ -34,7 +34,7 @@ foreach(file ${files})
     string(REGEX REPLACE "unit-([^$]+)" "test-\\1" testcase ${file_basename})
 
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        set(_test_opts -Wno-deprecated -Wno-float-equal -fconstexpr-steps=2300000)
+        set(_test_opts -Wno-deprecated -Wno-float-equal)
     elseif(CMAKE_COMPILER_IS_GNUCXX)
         set(_test_opts -Wno-deprecated -Wno-float-equal -fconstexpr-depth=30)
     else()
@@ -47,6 +47,13 @@ foreach(file ${files})
         INCLUDES thirdparty/catch
         DEFINES  CATCH_CONFIG_FAST_COMPILE
         OPTIONS  ${_test_opts})
+
+    # prime_modulus runs Miller-Rabin at compile time for 256-bit moduli
+    if(testcase MATCHES "^test-roots")
+        lam_target_constexpr_limit(${testcase} CLANG 5000000 GCC 50000000)
+    else()
+        lam_target_constexpr_limit(${testcase} CLANG 2300000)
+    endif()
 
     add_test(NAME "${testcase}_default"
       COMMAND ${testcase} ${CATCH_TEST_FILTER}
@@ -76,8 +83,8 @@ if(NTL_INCLUDE_DIR AND NTL_LIBRARY AND GMP_LIBRARY)
         SOURCE   src/unit-modinv.cpp
         CATCH_MAIN
         LIBS     ${NTL_LIBRARY} ${GMP_LIBRARY}
-        INCLUDES thirdparty/catch ${NTL_INCLUDE_DIR}
-        OPTIONS  $<$<CXX_COMPILER_ID:Clang>:-fconstexpr-steps=2300000>)
+        INCLUDES thirdparty/catch ${NTL_INCLUDE_DIR})
+    lam_target_constexpr_limit(unit-modinv CLANG 2300000)
 
     add_test(NAME unit-modinv_run COMMAND unit-modinv)
     set_tests_properties(unit-modinv_run PROPERTIES

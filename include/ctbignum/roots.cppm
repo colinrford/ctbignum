@@ -60,8 +60,8 @@ constexpr auto factor_out_val(big_int<N, T> n, T val)
   return std::pair{n, S};
 }
 
-// Miller-Rabin primality test
-// Returns true if n is (likely) prime, false if composite
+// Miller-Rabin with the first 12 primes as bases: exact for n < 3.18e23,
+// probabilistic above
 template<typename T, T... Modulus>
 constexpr bool is_prime(std::integer_sequence<T, Modulus...>)
 {
@@ -70,51 +70,62 @@ constexpr bool is_prime(std::integer_sequence<T, Modulus...>)
   constexpr auto one = big_int<N, T>{1};
   constexpr auto two = big_int<N, T>{2};
 
-  // Small numbers check
-  if (n < two)
+  // if constexpr: mod_exp uses Montgomery arithmetic, which can't be
+  // instantiated for an even modulus
+  if constexpr (n < two)
     return false;
-  if (n == two || n == big_int<N, T>{3})
+  else if constexpr (n == two || n == big_int<N, T>{3})
     return true;
-  if ((n[0] & 1) == 0)
+  else if constexpr ((n[0] & 1) == 0)
     return false;
-
-  // Write n-1 = d * 2^r
-  auto n_minus_1 = subtract_ignore_carry(n, one);
-  auto [d, r] = factor_out_twos(n_minus_1);
-
-  // Bases for witness checking (first 12 primes is sufficient for < 2^64)
-  constexpr unsigned bases[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37};
-
-  for (auto a_val : bases)
+  else
   {
-    auto a = big_int<N, T>{static_cast<T>(a_val)};
-    if (n <= a)
-      break;
+    // n - 1 = d * 2^r
+    auto n_minus_1 = subtract_ignore_carry(n, one);
+    auto [d, r] = factor_out_twos(n_minus_1);
 
-    // Compute x = a^d mod n
-    auto x = mod_exp(a, d, std::integer_sequence<T, Modulus...>{});
+    constexpr unsigned bases[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37};
 
-    if (x == one || x == n_minus_1)
-      continue;
-
-    bool witness_found = false;
-    for (std::size_t i = 1; i < r; ++i)
+    for (auto a_val : bases)
     {
-      x = mod_exp(x, two, std::integer_sequence<T, Modulus...>{});
-      if (x == n_minus_1)
-      {
-        witness_found = true;
+      auto a = big_int<N, T>{static_cast<T>(a_val)};
+      if (n <= a)
         break;
-      }
-    }
 
-    if (!witness_found)
-      return false; // Composite
+      auto x = mod_exp(a, d, std::integer_sequence<T, Modulus...>{});
+
+      if (x == one || x == n_minus_1)
+        continue;
+
+      bool witness_found = false;
+      for (std::size_t i = 1; i < r; ++i)
+      {
+        x = mod_exp(x, two, std::integer_sequence<T, Modulus...>{});
+        if (x == n_minus_1)
+        {
+          witness_found = true;
+          break;
+        }
+      }
+
+      if (!witness_found)
+        return false;
+    }
+    return true;
   }
-  return true; // Likely prime
 }
 
 } // namespace detail
+
+// Probable prime above 3.18e23 (see is_prime), not proven
+export template<typename T, T... Modulus>
+concept prime_modulus = detail::is_prime(std::integer_sequence<T, Modulus...>{});
+
+// Zq restricted to prime moduli
+export template<typename T, T... Modulus>
+  requires prime_modulus<T, Modulus...>
+auto Fp(std::integer_sequence<T, Modulus...>)
+{ return ZqElement<T, Modulus...>{}; }
 
 // Check if n is a quadratic residue mod p using Euler's criterion
 // n^((p - 1) / 2) ≡ 1 (mod p) iff n is a quadratic residue
@@ -129,13 +140,16 @@ constexpr bool is_quadratic_residue(ZqElement<T, Modulus...> n)
   if (n.data == big_int<sizeof...(Modulus), T>{})
     return true; // 0 is considered a residue (sqrt(0) = 0)
 
-  auto result = mod_exp(n.data, exp, std::integer_sequence<T, Modulus...>{});
-  return result == one;
+  if constexpr (p_minus_1 == one)
+    return true; // p = 2
+  else
+    return mod_exp(n.data, exp, std::integer_sequence<T, Modulus...>{}) == one;
 }
 
 // Tonelli-Shanks algorithm for computing modular square roots
-// Returns std::optional<ZqElement> - nullopt if n is not a quadratic residue
+// Returns nullopt if n is not a quadratic residue
 export template<typename T, T... Modulus>
+  requires prime_modulus<T, Modulus...>
 constexpr auto sqrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Modulus...>>
 {
   constexpr std::size_t N = sizeof...(Modulus);
@@ -143,36 +157,35 @@ constexpr auto sqrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
   constexpr auto one = big_int<N, T>{1};
   constexpr auto two = big_int<N, T>{2};
   constexpr auto p_minus_1 = subtract_ignore_carry(p, one);
-  // Handle zero
   if (n.data == big_int<N, T>{})
     return ZqElement<T, Modulus...>{};
 
-  // Check primality to prevent infinite loops (and ensure field properties)
-  if (!detail::is_prime(std::integer_sequence<T, Modulus...>{}))
-    return std::nullopt;
-  // Check if n is a quadratic residue to prevent infinite loops
-  if (!is_quadratic_residue(n))
-    return std::nullopt;
   // Factor p - 1 = Q * 2^S
   constexpr auto QS = detail::factor_out_twos(p_minus_1);
   constexpr auto Q = QS.first;
   constexpr std::size_t S = QS.second;
-  // Special case: p ≡ 3 (mod 4), i.e., S == 1
-  // sqrt(n) = n^((p + 1) / 4)
-  if constexpr (S == 1)
-  {
+  if constexpr (S == 0)
+  { // p = 2: x^2 = x; Montgomery arithmetic in mod_exp needs an odd modulus
+    return n;
+  }
+  else if constexpr (S == 1)
+  { // p ≡ 3 (mod 4): sqrt(n) = n^((p + 1) / 4)
+    if (!is_quadratic_residue(n))
+      return std::nullopt;
     constexpr auto exp = shift_right(add_ignore_carry(p, one), 2);
     auto result = mod_exp(n.data, exp, std::integer_sequence<T, Modulus...>{});
     return ZqElement<T, Modulus...>{result};
   }
   else
-  { // Find a quadratic non-residue z
+  {
+    if (!is_quadratic_residue(n))
+      return std::nullopt;
+    // Find a quadratic non-residue z
     constexpr auto neg_one = subtract_ignore_carry(p, one);
     constexpr auto legendre_exp = shift_right(p_minus_1, 1);
     big_int<N, T> z{2};
     while (mod_exp(z, legendre_exp, std::integer_sequence<T, Modulus...>{}) != neg_one)
       z = add_ignore_carry(z, one);
-    // Initialize
     std::size_t M = S;
     auto c = mod_exp(z, Q, std::integer_sequence<T, Modulus...>{});
     auto t = mod_exp(n.data, Q, std::integer_sequence<T, Modulus...>{});
@@ -194,7 +207,7 @@ constexpr auto sqrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
         b = mod_exp(b, two, std::integer_sequence<T, Modulus...>{});
       M = i;
       c = mod_exp(b, two, std::integer_sequence<T, Modulus...>{});
-      // t = t * c, R = R * b (using field multiplication via mod)
+      // t = t * c, R = R * b
       t = mod(mul(t, c), std::integer_sequence<T, Modulus...>{});
       R = mod(mul(R, b), std::integer_sequence<T, Modulus...>{});
     }
@@ -203,9 +216,10 @@ constexpr auto sqrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
 }
 
 // Cube root in finite field
-// Uses the formula: cbrt(a) = a^((2 * (p - 1)) / 3) when p ≡ 2 (mod 3)
+// Uses the formula: cbrt(a) = a^((2p - 1) / 3) when p ≡ 2 (mod 3)
 // Returns nullopt if n is not a cubic residue (when p ≡ 1 mod 3)
 export template<typename T, T... Modulus>
+  requires prime_modulus<T, Modulus...>
 constexpr auto cbrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Modulus...>>
 {
   constexpr std::size_t N = sizeof...(Modulus);
@@ -215,52 +229,45 @@ constexpr auto cbrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
   constexpr auto three = big_int<N, T>{3};
   constexpr auto p_minus_1 = subtract_ignore_carry(p, one);
 
-  // Handle zero
   if (n.data == big_int<N, T>{})
     return ZqElement<T, Modulus...>{};
 
-  // Check primality
-  if (!detail::is_prime(std::integer_sequence<T, Modulus...>{}))
-    return std::nullopt;
+  // For prime p, gcd(3, p - 1) is either 1 (p = 3 or p ≡ 2 mod 3) or 3 (p ≡ 1 mod 3)
+  constexpr auto p_mod_3 = div(p, three).remainder[0];
 
-  // For prime p, gcd(3, p - 1) is either 1 (p ≡ 2 mod 3) or 3 (p ≡ 1 mod 3)
-  constexpr auto p_mod_3 = p[0] % 3;
-
-  if constexpr (p_mod_3 == 2)
+  if constexpr (p_mod_3 == 0 || p == two)
+  { // p = 2 or 3: x^3 = x for every x
+    return n;
+  }
+  else if constexpr (p_mod_3 == 2)
   { // p ≡ 2 (mod 3): every element is a cubic residue, unique cube root
-    // cbrt(n) = n^((2 * (p - 1)) / 3)
-    constexpr auto exp = div(subtract_ignore_carry(add_ignore_carry(p, p), one), three).quotient;
+    // cbrt(n) = n^((2p - 1) / 3) = n^(2k + 1) with p = 3k + 2; avoids computing 2p
+    constexpr auto k = div(subtract_ignore_carry(p, two), three).quotient;
+    constexpr auto exp = add_ignore_carry(add_ignore_carry(k, k), one);
     auto result = mod_exp(n.data, exp, std::integer_sequence<T, Modulus...>{});
     return ZqElement<T, Modulus...>{result};
   }
   else
   {
-    // Case p ≡ 1 (mod 3)
-    // Use Adleman-Manders-Miller algorithm
-
-    // Check if n is a cubic residue
+    // p ≡ 1 (mod 3): Adleman-Manders-Miller
     constexpr auto residue_exp = div(p_minus_1, three).quotient;
     if (mod_exp(n.data, residue_exp, std::integer_sequence<T, Modulus...>{}) != one)
     {
       return std::nullopt;
     }
 
-    // 1. Factor p-1 = 3^S * t where 3 does not divide t
+    // p - 1 = 3^S * t with 3 not dividing t
     constexpr auto Qt = detail::factor_out_val(p_minus_1, static_cast<T>(3));
     constexpr auto t = Qt.first;
     constexpr std::size_t S = Qt.second;
 
-    // 2. Compute k = 1/3 mod t
-    // Since gcd(3, t) = 1, the inverse exists.
-    // Use manual inversion logic for constant divisor 3 to ensure correctness.
-    // Solve 3k = 1 + qt for integer q (where 1+qt is divisible by 3).
-
+    // k = 1/3 mod t = (1 + qt) / 3, with q in {1, 2} chosen so 3 divides 1 + qt
     auto t_rem_3 = div(t, three).remainder;
-    auto k = t; // Placeholder
+    auto k = t;
     if (t_rem_3 == big_int<sizeof...(Modulus), T>{1})
     {
       auto two_t_full = mul(two, t);
-      // Truncate to N limbs (we know it fits since 1+2t < p)
+      // 1 + 2t < p, so 2t fits in N limbs
       constexpr auto N_limbs = sizeof...(Modulus);
       big_int<N_limbs, T> two_t;
       for (std::size_t i = 0; i < N_limbs; ++i)
@@ -271,12 +278,11 @@ constexpr auto cbrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
     }
     else
     {
-      // remainder must be 2
-      auto num = add_ignore_carry(one, t); // 1 + t < p. SAFE.
+      // t ≡ 2 (mod 3)
+      auto num = add_ignore_carry(one, t);
       k = div(num, three).quotient;
     }
-    // 3. Find a cubic non-residue z such that z^((p-1)/3) != 1
-    // We can use a deterministic search 2, 3, ...
+    // cubic non-residue z: z^((p - 1) / 3) != 1
     auto z = two;
     while (true)
     {
@@ -285,7 +291,6 @@ constexpr auto cbrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
       z = add_ignore_carry(z, one);
     }
 
-    // 4. Setup parameters
     auto c = mod_exp(z, t, std::integer_sequence<T, Modulus...>{});
     auto r = mod_exp(n.data, k, std::integer_sequence<T, Modulus...>{});
     auto n_inv = mod_inv(n.data, p);
@@ -295,25 +300,17 @@ constexpr auto cbrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
     auto prod = mul(n_inv, h_cubed);
     auto b = mod(prod, std::integer_sequence<T, Modulus...>());
 
-    // 5. AMM Correction Loop
-    // Initialize variables:
-    // x: Current root approximation (n^k)
-    // g: Current generator power (starts as c = z^t)
-    // r_val: Current order exponent (starts as S)
-    // b_term: Current error term (initially b)
-
     auto x = r;
     auto g = c;
     auto r_val = S;
     auto b_term = b;
-    // Loop to reduce the error term b to 1
     std::size_t safety_counter = 0;
     while (b_term != one)
     {
-      if (++safety_counter > S + 10) // Should converge within S steps
+      if (++safety_counter > S + 10) // converges within S steps for prime p
         return std::nullopt;
 
-      // Find m such that b^(3^m) = 1
+      // least m with b^(3^m) = 1
       auto temp = b_term;
       std::size_t m = 0;
       for (; m < r_val; ++m)
@@ -323,16 +320,15 @@ constexpr auto cbrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
         temp = mod_exp(temp, three, std::integer_sequence<T, Modulus...>{});
       }
 
-      // If m == r_val, no solution (should not happen for valid residues)
       if (m == r_val)
         return std::nullopt;
 
-      // Update g = g^(3^(r-m-1))
+      // g = g^(3^(r - m - 1))
       auto g2 = g;
       for (std::size_t j = 0; j < r_val - m - 1; ++j)
         g2 = mod_exp(g2, three, std::integer_sequence<T, Modulus...>{});
 
-      g = g2; // New g
+      g = g2;
 
       // x = x * g
       // b = b * g^3
@@ -344,6 +340,190 @@ constexpr auto cbrt(ZqElement<T, Modulus...> n) -> std::optional<ZqElement<T, Mo
 
     return ZqElement<T, Modulus...>{x};
   }
+}
+
+// Runtime-modulus overloads: instantiated once per limb count N, not once per modulus.
+// Precondition for all of them: p is prime.
+
+export template<std::size_t N, typename T>
+constexpr bool is_quadratic_residue(big_int<N, T> value, big_int<N, T> p)
+{
+  auto one = big_int<N, T>{1};
+  auto p_minus_1 = subtract_ignore_carry(p, one);
+  auto exp = shift_right(p_minus_1, 1); // (p - 1) / 2
+
+  value = mod(value, p);
+  if (value == big_int<N, T>{} || p_minus_1 == one)
+    return true;
+
+  auto result = mod_exp(value, exp, p);
+  return result == one;
+}
+
+// Tonelli-Shanks with runtime modulus
+export template<std::size_t N, typename T>
+constexpr auto sqrt(big_int<N, T> value, big_int<N, T> p) -> std::optional<big_int<N, T>>
+{
+  auto one = big_int<N, T>{1};
+  auto two = big_int<N, T>{2};
+  auto p_minus_1 = subtract_ignore_carry(p, one);
+
+  value = mod(value, p);
+  // p = 2: x^2 = x; Montgomery arithmetic in mod_exp needs an odd modulus
+  if (value == big_int<N, T>{} || p == two)
+    return value;
+
+  if (!is_quadratic_residue(value, p))
+    return std::nullopt;
+
+  auto [Q, S] = detail::factor_out_twos(p_minus_1);
+
+  if (S == 1)
+  {
+    auto exp = shift_right(add_ignore_carry(p, one), 2);
+    return mod_exp(value, exp, p);
+  }
+
+  auto neg_one = p_minus_1;
+  auto legendre_exp = shift_right(p_minus_1, 1);
+  big_int<N, T> z{2};
+  while (mod_exp(z, legendre_exp, p) != neg_one)
+    z = add_ignore_carry(z, one);
+
+  std::size_t M = S;
+  auto c = mod_exp(z, Q, p);
+  auto t = mod_exp(value, Q, p);
+  auto Q_plus_1_div_2 = shift_right(add_ignore_carry(Q, one), 1);
+  auto R = mod_exp(value, Q_plus_1_div_2, p);
+
+  while (t != one)
+  {
+    std::size_t i = 1;
+    auto temp = mod_exp(t, two, p);
+    while (temp != one && i < M)
+    {
+      temp = mod_exp(temp, two, p);
+      ++i;
+    }
+    auto b = c;
+    for (std::size_t j = 0; j < M - i - 1; ++j)
+      b = mod_exp(b, two, p);
+    M = i;
+    c = mod_exp(b, two, p);
+    t = mod(mul(t, c), p);
+    R = mod(mul(R, b), p);
+  }
+  return R;
+}
+
+// Adleman-Manders-Miller cube root with runtime modulus
+export template<std::size_t N, typename T>
+constexpr auto cbrt(big_int<N, T> value, big_int<N, T> p) -> std::optional<big_int<N, T>>
+{
+  auto one = big_int<N, T>{1};
+  auto two = big_int<N, T>{2};
+  auto three = big_int<N, T>{3};
+  auto p_minus_1 = subtract_ignore_carry(p, one);
+
+  value = mod(value, p);
+  if (value == big_int<N, T>{})
+    return value;
+
+  auto p_mod_3 = div(p, three).remainder[0];
+
+  // p = 2 or 3: x^3 = x for every x
+  if (p_mod_3 == 0 || p == two)
+    return value;
+
+  if (p_mod_3 == 2)
+  {
+    // p ≡ 2 (mod 3): every element is a cubic residue, unique cube root
+    // exponent (2p - 1) / 3 = 2k + 1 with p = 3k + 2; avoids computing 2p
+    auto k = div(subtract_ignore_carry(p, two), three).quotient;
+    auto exp = add_ignore_carry(add_ignore_carry(k, k), one);
+    return mod_exp(value, exp, p);
+  }
+
+  // p ≡ 1 (mod 3): Adleman-Manders-Miller
+  auto residue_exp = div(p_minus_1, three).quotient;
+  if (mod_exp(value, residue_exp, p) != one)
+    return std::nullopt;
+
+  // p - 1 = 3^S * t with 3 not dividing t
+  auto [t, S] = detail::factor_out_val(p_minus_1, static_cast<T>(3));
+
+  // k = 1/3 mod t
+  auto t_rem_3 = div(t, three).remainder;
+  auto k = t;
+  if (t_rem_3 == big_int<N, T>{1})
+  {
+    auto two_t_full = mul(two, t);
+    big_int<N, T> two_t;
+    for (std::size_t i = 0; i < N; ++i)
+      two_t[i] = two_t_full[i];
+
+    auto num = add_ignore_carry(one, two_t);
+    k = div(num, three).quotient;
+  }
+  else
+  {
+    auto num = add_ignore_carry(one, t);
+    k = div(num, three).quotient;
+  }
+
+  // cubic non-residue z: z^((p - 1) / 3) != 1
+  auto z = two;
+  while (true)
+  {
+    if (mod_exp(z, residue_exp, p) != one)
+      break;
+    z = add_ignore_carry(z, one);
+  }
+
+  auto c = mod_exp(z, t, p);
+  auto r = mod_exp(value, k, p);
+  auto n_inv = mod_inv(value, p);
+
+  auto h = r;
+  auto h_cubed = mod_exp(h, three, p);
+  auto b = mod(mul(n_inv, h_cubed), p);
+
+  auto x = r;
+  auto g = c;
+  auto r_val = S;
+  auto b_term = b;
+
+  std::size_t safety_counter = 0;
+  while (b_term != one)
+  {
+    if (++safety_counter > S + 10)
+      return std::nullopt;
+
+    auto temp = b_term;
+    std::size_t m = 0;
+    for (; m < r_val; ++m)
+    {
+      if (temp == one)
+        break;
+      temp = mod_exp(temp, three, p);
+    }
+
+    if (m == r_val)
+      return std::nullopt;
+
+    auto g2 = g;
+    for (std::size_t j = 0; j < r_val - m - 1; ++j)
+      g2 = mod_exp(g2, three, p);
+
+    g = g2;
+
+    x = mod(mul(x, g), p);
+    g = mod_exp(g, three, p);
+    b_term = mod(mul(b_term, g), p);
+    r_val = m;
+  }
+
+  return x;
 }
 
 } // namespace lam::cbn

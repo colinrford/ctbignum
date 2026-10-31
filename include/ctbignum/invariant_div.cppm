@@ -95,6 +95,13 @@ constexpr auto mod(big_int<N, T> n, std::integer_sequence<T, Modulus...>)
   return detail::to_length<M>(subtract_ignore_carry(n, partial_mul<N>(big_int<M, T>{Modulus...}, d)));
 }
 
+// Runtime modulus
+export template<std::size_t N1, std::size_t N2, typename T>
+constexpr auto mod(big_int<N1, T> n, big_int<N2, T> m)
+{
+  return div(n, m).remainder;
+}
+
 export template<typename T, std::size_t N, T... Modulus>
 constexpr DivisionResult<big_int<N, T>, big_int<sizeof...(Modulus), T>> div(big_int<N, T> n,
                                                                             std::integer_sequence<T, Modulus...>)

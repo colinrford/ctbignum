@@ -7,6 +7,9 @@ file(GLOB standalone_files "src/standalone-*.cpp")
 foreach(file ${standalone_files})
     get_filename_component(file_basename ${file} NAME_WE)
     ctbignum_add_executable(${file_basename} SOURCE ${file} LIBS ${CMAKE_THREAD_LIBS_INIT})
+    if(file_basename MATCHES "roots")
+        lam_target_constexpr_limit(${file_basename} CLANG 5000000 GCC 50000000)
+    endif()
 endforeach()
 
 ## bench-*, bench.cpp: upstream comparisons against NTL; skipped if deps are missing
@@ -38,6 +41,9 @@ if(GMP_INCLUDE_DIR AND GMP_LIBRARIES
             SOURCE   ${file}
             LIBS     benchmark::benchmark ${NTL_LIBRARIES} ${GMP_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
             INCLUDES ${NTL_INCLUDES} ${GMP_INCLUDES})
+        if(file_basename MATCHES "roots")
+            lam_target_constexpr_limit(${benchmark_name} CLANG 5000000 GCC 50000000)
+        endif()
     endforeach()
 else()
     message(STATUS "NTL, GMP or google-benchmark not found. Skipping bench-* benchmarks.")
